@@ -31,10 +31,10 @@ extension Hash {
     /// - `Hash.Table<Int>` positions cannot be mixed with `Hash.Table<String>` positions
     /// - Compile-time prevention of index confusion between different collections
     ///
-    /// ## Move-Only
+    /// ## Conditional Copyable
     ///
-    /// `Hash.Table` is unconditionally `~Copyable` due to its deinit requirement
-    /// for storage cleanup. This is consistent with first-class ~Copyable support.
+    /// `Hash.Table` is conditionally `Copyable` when `Element` is `Copyable`.
+    /// This enables containers using `Hash.Table` to also be conditionally Copyable.
     ///
     /// ## Usage with Set.Ordered
     ///
@@ -53,35 +53,78 @@ extension Hash {
     /// ```
     @safe
     public struct Table<Element: ~Copyable>: ~Copyable {
-        /// Hash values for each bucket.
-        /// Uses sentinel values: 0 = empty, Int.min = deleted.
+
+        // MARK: - Storage Class
+
+        /// Internal storage class using ManagedBuffer.
+        /// Stores hashes and positions in a single allocation.
+        /// Header contains (count, occupied, hashCapacity).
+        /// Elements are laid out as: [hashes...][positions...]
         @usableFromInline
-        var _hashes: UnsafeMutablePointer<Int>
+        final class Storage: ManagedBuffer<(count: Int, occupied: Int, hashCapacity: Int), Int> {
 
-        /// Positions in external storage for each bucket (stored as raw Int).
-        @usableFromInline
-        var _positions: UnsafeMutablePointer<Int>
+            /// Creates storage with the specified hash capacity.
+            @usableFromInline
+            static func create(hashCapacity: Int) -> Storage {
+                // Allocate space for hashes + positions
+                let storage = Storage.create(minimumCapacity: hashCapacity * 2) { _ in
+                    (count: 0, occupied: 0, hashCapacity: hashCapacity)
+                }
+                // Initialize all slots to empty (0)
+                _ = unsafe storage.withUnsafeMutablePointerToElements { elements in
+                    unsafe elements.initialize(repeating: Table.empty, count: hashCapacity * 2)
+                }
+                return unsafe unsafeDowncast(storage, to: Storage.self)
+            }
 
-        /// The allocated capacity of the hash table.
-        @usableFromInline
-        var _capacity: Int
+            deinit {
+                // ManagedBuffer handles deallocation automatically
+            }
 
-        /// Number of occupied buckets (excluding deleted).
-        @usableFromInline
-        var _count: Int
+            /// Pointer to hash values.
+            @usableFromInline
+            var _hashesPointer: UnsafeMutablePointer<Int> {
+                unsafe withUnsafeMutablePointerToElements { unsafe $0 }
+            }
 
-        /// Number of occupied + deleted buckets (for load factor).
-        @usableFromInline
-        var _occupied: Int
+            /// Pointer to position values.
+            @usableFromInline
+            var _positionsPointer: UnsafeMutablePointer<Int> {
+                let hashCapacity = header.hashCapacity
+                return unsafe withUnsafeMutablePointerToElements { unsafe $0 + hashCapacity }
+            }
 
-        // MARK: - Deinitialization
+            /// Reads hash at bucket index.
+            @usableFromInline
+            func _readHash(at bucket: Int) -> Int {
+                unsafe withUnsafeMutablePointerToElements { unsafe $0[bucket] }
+            }
 
-        deinit {
-            if _capacity > 0 {
-                unsafe _hashes.deallocate()
-                unsafe _positions.deallocate()
+            /// Reads position at bucket index.
+            @usableFromInline
+            func _readPosition(at bucket: Int) -> Int {
+                let hashCapacity = header.hashCapacity
+                return unsafe withUnsafeMutablePointerToElements { unsafe $0[hashCapacity + bucket] }
+            }
+
+            /// Writes hash at bucket index.
+            @usableFromInline
+            func _writeHash(at bucket: Int, value: Int) {
+                unsafe withUnsafeMutablePointerToElements { unsafe $0[bucket] = value }
+            }
+
+            /// Writes position at bucket index.
+            @usableFromInline
+            func _writePosition(at bucket: Int, value: Int) {
+                let hashCapacity = header.hashCapacity
+                unsafe withUnsafeMutablePointerToElements { unsafe $0[hashCapacity + bucket] = value }
             }
         }
+
+        @usableFromInline
+        var _storage: Storage
+
+        // NO deinit - Storage class handles cleanup via ManagedBuffer
 
         // MARK: - Sentinel Values
 
@@ -101,14 +144,8 @@ extension Hash {
         ///   hash table should be able to store without rehashing.
         @inlinable
         public init(minimumCapacity: Int = 0) {
-            let capacity = Self.capacity(for: minimumCapacity)
-            _capacity = capacity
-            unsafe (_hashes = .allocate(capacity: capacity))
-            unsafe (_positions = .allocate(capacity: capacity))
-            unsafe _hashes.initialize(repeating: Self.empty, count: capacity)
-            unsafe _positions.initialize(repeating: 0, count: capacity)
-            _count = 0
-            _occupied = 0
+            let hashCapacity = Self.capacity(for: minimumCapacity)
+            _storage = Storage.create(hashCapacity: hashCapacity)
         }
 
         /// Computes the actual capacity for a given minimum capacity.
@@ -126,15 +163,15 @@ extension Hash {
 
         /// The number of elements in the hash table.
         @inlinable
-        public var count: Int { _count }
+        public var count: Int { _storage.header.count }
 
         /// Whether the hash table is empty.
         @inlinable
-        public var isEmpty: Bool { _count == 0 }
+        public var isEmpty: Bool { _storage.header.count == 0 }
 
         /// The current capacity of the hash table.
         @inlinable
-        public var capacity: Int { _capacity }
+        public var capacity: Int { _storage.header.hashCapacity }
 
         // MARK: - Lookup
 
@@ -151,24 +188,25 @@ extension Hash {
             equals: (Index_Primitives.Index<Element>) -> Bool
         ) -> Index_Primitives.Index<Element>? {
             let hash = Self.normalize(hashValue)
-            var bucket = Self.bucket(for: hash, capacity: _capacity)
+            let hashCapacity = _storage.header.hashCapacity
+            var bucket = Self.bucket(for: hash, capacity: hashCapacity)
 
             while true {
-                let storedHash = unsafe _hashes[bucket]
+                let storedHash = _storage._readHash(at: bucket)
 
                 if storedHash == Self.empty {
                     return nil
                 }
 
                 if storedHash == hash {
-                    let rawPosition = unsafe _positions[bucket]
+                    let rawPosition = _storage._readPosition(at: bucket)
                     let position = Index_Primitives.Index<Element>(__unchecked: (), position: rawPosition)
                     if equals(position) {
                         return position
                     }
                 }
 
-                bucket = Self.nextBucket(bucket, capacity: _capacity)
+                bucket = Self.nextBucket(bucket, capacity: hashCapacity)
             }
         }
 
@@ -185,24 +223,25 @@ extension Hash {
             equals: (Index_Primitives.Index<Element>) -> Bool
         ) -> Int? {
             let hash = Self.normalize(hashValue)
-            var bucket = Self.bucket(for: hash, capacity: _capacity)
+            let hashCapacity = _storage.header.hashCapacity
+            var bucket = Self.bucket(for: hash, capacity: hashCapacity)
 
             while true {
-                let storedHash = unsafe _hashes[bucket]
+                let storedHash = _storage._readHash(at: bucket)
 
                 if storedHash == Self.empty {
                     return nil
                 }
 
                 if storedHash == hash {
-                    let rawPosition = unsafe _positions[bucket]
+                    let rawPosition = _storage._readPosition(at: bucket)
                     let position = Index_Primitives.Index<Element>(__unchecked: (), position: rawPosition)
                     if equals(position) {
                         return bucket
                     }
                 }
 
-                bucket = Self.nextBucket(bucket, capacity: _capacity)
+                bucket = Self.nextBucket(bucket, capacity: hashCapacity)
             }
         }
 
@@ -228,19 +267,20 @@ extension Hash {
             }
 
             let hash = Self.normalize(hashValue)
-            var bucket = Self.bucket(for: hash, capacity: _capacity)
+            let hashCapacity = _storage.header.hashCapacity
+            var bucket = Self.bucket(for: hash, capacity: hashCapacity)
             var firstDeleted: Int? = nil
 
             while true {
-                let storedHash = unsafe _hashes[bucket]
+                let storedHash = _storage._readHash(at: bucket)
 
                 if storedHash == Self.empty {
                     let insertBucket = firstDeleted ?? bucket
-                    unsafe (_hashes[insertBucket] = hash)
-                    unsafe (_positions[insertBucket] = position.position.rawValue)
-                    _count += 1
+                    _storage._writeHash(at: insertBucket, value: hash)
+                    _storage._writePosition(at: insertBucket, value: position.position.rawValue)
+                    _storage.header.count += 1
                     if firstDeleted == nil {
-                        _occupied += 1
+                        _storage.header.occupied += 1
                     }
                     return true
                 }
@@ -250,14 +290,14 @@ extension Hash {
                         firstDeleted = bucket
                     }
                 } else if storedHash == hash {
-                    let rawPosition = unsafe _positions[bucket]
+                    let rawPosition = _storage._readPosition(at: bucket)
                     let existingPosition = Index_Primitives.Index<Element>(__unchecked: (), position: rawPosition)
                     if equals(existingPosition) {
                         return false // Duplicate
                     }
                 }
 
-                bucket = Self.nextBucket(bucket, capacity: _capacity)
+                bucket = Self.nextBucket(bucket, capacity: hashCapacity)
             }
         }
 
@@ -277,22 +317,23 @@ extension Hash {
             }
 
             let hash = Self.normalize(hashValue)
-            var bucket = Self.bucket(for: hash, capacity: _capacity)
+            let hashCapacity = _storage.header.hashCapacity
+            var bucket = Self.bucket(for: hash, capacity: hashCapacity)
 
             while true {
-                let storedHash = unsafe _hashes[bucket]
+                let storedHash = _storage._readHash(at: bucket)
 
                 if storedHash == Self.empty || storedHash == Self.deleted {
-                    unsafe (_hashes[bucket] = hash)
-                    unsafe (_positions[bucket] = position.position.rawValue)
-                    _count += 1
+                    _storage._writeHash(at: bucket, value: hash)
+                    _storage._writePosition(at: bucket, value: position.position.rawValue)
+                    _storage.header.count += 1
                     if storedHash == Self.empty {
-                        _occupied += 1
+                        _storage.header.occupied += 1
                     }
                     return
                 }
 
-                bucket = Self.nextBucket(bucket, capacity: _capacity)
+                bucket = Self.nextBucket(bucket, capacity: hashCapacity)
             }
         }
 
@@ -315,9 +356,9 @@ extension Hash {
                 return nil
             }
 
-            let rawPosition = unsafe _positions[bucket]
-            unsafe (_hashes[bucket] = Self.deleted)
-            _count -= 1
+            let rawPosition = _storage._readPosition(at: bucket)
+            _storage._writeHash(at: bucket, value: Self.deleted)
+            _storage.header.count -= 1
             return Index_Primitives.Index<Element>(__unchecked: (), position: rawPosition)
         }
 
@@ -326,35 +367,25 @@ extension Hash {
         /// - Parameter bucket: The bucket index to remove.
         @inlinable
         public mutating func remove(at bucket: Int) {
-            precondition(unsafe _hashes[bucket] != Self.empty && _hashes[bucket] != Self.deleted)
-            unsafe (_hashes[bucket] = Self.deleted)
-            _count -= 1
+            precondition(_storage._readHash(at: bucket) != Self.empty && _storage._readHash(at: bucket) != Self.deleted)
+            _storage._writeHash(at: bucket, value: Self.deleted)
+            _storage.header.count -= 1
         }
 
         /// Removes all elements from the hash table.
         @inlinable
         public mutating func removeAll(keepingCapacity: Bool = false) {
             if keepingCapacity {
-                for i in 0..<_capacity {
-                    unsafe (_hashes[i] = Self.empty)
+                let hashCapacity = _storage.header.hashCapacity
+                for i in 0..<hashCapacity {
+                    _storage._writeHash(at: i, value: Self.empty)
                 }
-                _count = 0
-                _occupied = 0
+                _storage.header.count = 0
+                _storage.header.occupied = 0
             } else {
-                // Deallocate old storage
-                if _capacity > 0 {
-                    unsafe _hashes.deallocate()
-                    unsafe _positions.deallocate()
-                }
-                // Reinitialize with default capacity
-                let capacity = Self.capacity(for: 0)
-                _capacity = capacity
-                unsafe (_hashes = .allocate(capacity: capacity))
-                unsafe (_positions = .allocate(capacity: capacity))
-                unsafe _hashes.initialize(repeating: Self.empty, count: capacity)
-                unsafe _positions.initialize(repeating: 0, count: capacity)
-                _count = 0
-                _occupied = 0
+                // Create new storage with default capacity
+                let hashCapacity = Self.capacity(for: 0)
+                _storage = Storage.create(hashCapacity: hashCapacity)
             }
         }
 
@@ -369,11 +400,13 @@ extension Hash {
         @inlinable
         public mutating func decrementPositions(after removedPosition: Index_Primitives.Index<Element>) {
             let removedRaw = removedPosition.position.rawValue
-            for i in 0..<_capacity {
-                let hash = unsafe _hashes[i]
+            let hashCapacity = _storage.header.hashCapacity
+            for i in 0..<hashCapacity {
+                let hash = _storage._readHash(at: i)
                 if hash != Self.empty && hash != Self.deleted {
-                    if unsafe _positions[i] > removedRaw {
-                        unsafe (_positions[i] -= 1)
+                    let pos = _storage._readPosition(at: i)
+                    if pos > removedRaw {
+                        _storage._writePosition(at: i, value: pos - 1)
                     }
                 }
             }
@@ -384,44 +417,37 @@ extension Hash {
         /// Whether the hash table should grow.
         @inlinable
         var shouldGrow: Bool {
+            let hashCapacity = _storage.header.hashCapacity
+            let occupied = _storage.header.occupied
             // Grow when occupied exceeds 70% of capacity
-            _occupied * 10 >= _capacity * 7
+            return occupied * 10 >= hashCapacity * 7
         }
 
         /// Doubles the capacity and rehashes all elements.
         @inlinable
         mutating func grow() {
-            let newCapacity = max(8, _capacity * 2)
-            let newHashes = UnsafeMutablePointer<Int>.allocate(capacity: newCapacity)
-            let newPositions = UnsafeMutablePointer<Int>.allocate(capacity: newCapacity)
-            unsafe newHashes.initialize(repeating: Self.empty, count: newCapacity)
-            unsafe newPositions.initialize(repeating: 0, count: newCapacity)
+            let oldCapacity = _storage.header.hashCapacity
+            let newCapacity = max(8, oldCapacity * 2)
+            let newStorage = Storage.create(hashCapacity: newCapacity)
 
-            for i in 0..<_capacity {
-                let hash = unsafe _hashes[i]
+            for i in 0..<oldCapacity {
+                let hash = _storage._readHash(at: i)
                 if hash != Self.empty && hash != Self.deleted {
-                    let position = unsafe _positions[i]
+                    let position = _storage._readPosition(at: i)
                     var bucket = Self.bucket(for: hash, capacity: newCapacity)
 
-                    while unsafe newHashes[bucket] != Self.empty {
+                    while newStorage._readHash(at: bucket) != Self.empty {
                         bucket = Self.nextBucket(bucket, capacity: newCapacity)
                     }
 
-                    unsafe (newHashes[bucket] = hash)
-                    unsafe (newPositions[bucket] = position)
+                    newStorage._writeHash(at: bucket, value: hash)
+                    newStorage._writePosition(at: bucket, value: position)
                 }
             }
 
-            // Deallocate old storage
-            if _capacity > 0 {
-                unsafe _hashes.deallocate()
-                unsafe _positions.deallocate()
-            }
-
-            unsafe (_hashes = newHashes)
-            unsafe (_positions = newPositions)
-            _capacity = newCapacity
-            _occupied = _count
+            newStorage.header.count = _storage.header.count
+            newStorage.header.occupied = _storage.header.count
+            _storage = newStorage
         }
 
         // MARK: - Hash Utilities
@@ -447,6 +473,14 @@ extension Hash {
         }
     }
 }
+
+// MARK: - Conditional Copyable
+
+/// `Hash.Table` is `Copyable` when its element type is `Copyable`.
+///
+/// This enables containers using `Hash.Table` (like `Set.Ordered`) to be
+/// conditionally Copyable when their elements are Copyable.
+extension Hash.Table: Copyable where Element: Copyable {}
 
 // MARK: - Sendable
 
