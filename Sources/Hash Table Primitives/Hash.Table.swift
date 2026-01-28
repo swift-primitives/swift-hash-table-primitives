@@ -277,7 +277,7 @@ extension Hash {
                 if storedHash == Self.empty {
                     let insertBucket = firstDeleted ?? bucket
                     _storage._writeHash(at: insertBucket, value: hash)
-                    _storage._writePosition(at: insertBucket, value: position.position.rawValue)
+                    _storage._writePosition(at: insertBucket, value: position.position)
                     _storage.header.count += 1
                     if firstDeleted == nil {
                         _storage.header.occupied += 1
@@ -325,7 +325,7 @@ extension Hash {
 
                 if storedHash == Self.empty || storedHash == Self.deleted {
                     _storage._writeHash(at: bucket, value: hash)
-                    _storage._writePosition(at: bucket, value: position.position.rawValue)
+                    _storage._writePosition(at: bucket, value: position.position)
                     _storage.header.count += 1
                     if storedHash == Self.empty {
                         _storage.header.occupied += 1
@@ -399,7 +399,7 @@ extension Hash {
         /// - Parameter removedPosition: The typed position that was removed.
         @inlinable
         public mutating func decrementPositions(after removedPosition: Index_Primitives.Index<Element>) {
-            let removedRaw = removedPosition.position.rawValue
+            let removedRaw = removedPosition.position
             let hashCapacity = _storage.header.hashCapacity
             for i in 0..<hashCapacity {
                 let hash = _storage._readHash(at: i)

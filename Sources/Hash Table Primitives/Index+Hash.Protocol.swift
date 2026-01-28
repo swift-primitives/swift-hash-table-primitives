@@ -11,6 +11,7 @@
 
 public import Hash_Primitives
 public import Index_Primitives
+import Affine_Primitives
 
 // MARK: - Index: Hash.Protocol
 
@@ -19,7 +20,7 @@ public import Index_Primitives
 // This avoids ambiguous `==` operators.
 
 extension Tagged: @retroactive Hash.`Protocol`
-where RawValue == Affine.Discrete.Position, Tag: ~Copyable {
+where RawValue == Ordinal, Tag: ~Copyable {
     @inlinable
     public borrowing func hash(into hasher: inout Hasher) {
         hasher.combine(rawValue)

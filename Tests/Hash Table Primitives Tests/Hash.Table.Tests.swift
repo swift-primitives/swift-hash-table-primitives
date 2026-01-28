@@ -106,7 +106,7 @@ struct HashIndexTests {
 
         // Insert enough elements to trigger growth
         for i: Index<TestElement> in try (0..<20).map(Index.init) {
-            index.insert(position: i, hashValue: i.position.rawValue * 7, equals: { _ in false })
+            index.insert(position: i, hashValue: i.position * 7, equals: { _ in false })
         }
 
         #expect(index.count == 20)
@@ -114,7 +114,7 @@ struct HashIndexTests {
 
         // All elements should still be findable
         for i: Index<TestElement> in try (0..<20).map(Index.init) {
-            #expect(index.position(forHash: i.position.rawValue * 7, equals: { $0 == i }) == i)
+            #expect(index.position(forHash: i.position * 7, equals: { $0 == i }) == i)
         }
     }
 
@@ -123,7 +123,7 @@ struct HashIndexTests {
         var index = Hash.Table<TestElement>()
 
         for i: Index<TestElement> in try (0..<10).map(Index.init) {
-            index.insert(position: i, hashValue: i.position.rawValue * 3, equals: { _ in false })
+            index.insert(position: i, hashValue: i.position * 3, equals: { _ in false })
         }
 
         let capacityBefore = index.capacity
@@ -139,7 +139,7 @@ struct HashIndexTests {
         var index = Hash.Table<TestElement>(minimumCapacity: 100)
 
         for i: Index<TestElement> in try (0..<50).map(Index.init) {
-            index.insert(position: i, hashValue: i.position.rawValue * 5, equals: { _ in false })
+            index.insert(position: i, hashValue: i.position * 5, equals: { _ in false })
         }
 
         index.removeAll(keepingCapacity: false)
