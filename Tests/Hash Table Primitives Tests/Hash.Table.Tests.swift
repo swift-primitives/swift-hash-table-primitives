@@ -203,10 +203,8 @@ struct HashIndexTests {
         var indexA = Hash.Table<TypeA>()
         var indexB = Hash.Table<TypeB>()
 
-        let positionA: Index<TypeA> = 0
-        let positionB: Index<TypeB> = 0
-        indexA.insert(position: positionA, hashValue: 42, equals: { _ in false })
-        indexB.insert(position: positionB, hashValue: 42, equals: { _ in false })
+        indexA.insert(position: 0, hashValue: 42, equals: { _ in false })
+        indexB.insert(position: 0, hashValue: 42, equals: { _ in false })
 
         // These are different types - positions cannot be mixed
         // indexA.insert(position: positionB, ...) would be a compile error
