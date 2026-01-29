@@ -20,14 +20,16 @@ extension Hash.Table where Element: ~Copyable {
     ///     matches the search element. Called for hash collisions.
     /// - Returns: The typed position in external storage if found, or `nil`.
     @inlinable
-    public mutating func position(
+    public borrowing func position(
         forHash hashValue: Int,
         equals: (Index<Element>) -> Bool
     ) -> Index<Element>? {
         let hash = Self.normalize(hashValue)
-        var currentBucket = bucket.for(hash: hash)
+        let capacity = Int(bitPattern: _storage.header.capacity)
+        var bucketInt = hash & (capacity - 1)
 
         while true {
+            let currentBucket = BucketIndex(__unchecked: (), Ordinal(UInt(bucketInt)))
             let storedHash = _storage.readHash(at: currentBucket)
 
             if storedHash == Self.empty {
@@ -41,7 +43,7 @@ extension Hash.Table where Element: ~Copyable {
                 }
             }
 
-            currentBucket = bucket.next(currentBucket)
+            bucketInt = (bucketInt + 1) & (capacity - 1)
         }
     }
 
@@ -53,14 +55,16 @@ extension Hash.Table where Element: ~Copyable {
     ///     matches the search element.
     /// - Returns: The bucket index if found, or `nil`.
     @inlinable
-    public mutating func bucketIndex(
+    public borrowing func bucketIndex(
         forHash hashValue: Int,
         equals: (Index<Element>) -> Bool
     ) -> BucketIndex? {
         let hash = Self.normalize(hashValue)
-        var currentBucket = bucket.for(hash: hash)
+        let capacity = Int(bitPattern: _storage.header.capacity)
+        var bucketInt = hash & (capacity - 1)
 
         while true {
+            let currentBucket = BucketIndex(__unchecked: (), Ordinal(UInt(bucketInt)))
             let storedHash = _storage.readHash(at: currentBucket)
 
             if storedHash == Self.empty {
@@ -74,7 +78,7 @@ extension Hash.Table where Element: ~Copyable {
                 }
             }
 
-            currentBucket = bucket.next(currentBucket)
+            bucketInt = (bucketInt + 1) & (capacity - 1)
         }
     }
 }
