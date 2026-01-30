@@ -232,7 +232,7 @@ extension Hash {
 
         /// A fixed-capacity hash table with inline storage.
         ///
-        /// `Hash.Table.Inline` stores hash-position pairs directly in the struct,
+        /// `Hash.Table.Static` stores hash-position pairs directly in the struct,
         /// avoiding heap allocation. Use for small, bounded collections where
         /// O(1) lookup is needed without heap overhead.
         ///
@@ -257,7 +257,7 @@ extension Hash {
         /// - Note: This type is declared inside `Hash.Table` (not in an extension) due to a
         ///   Swift compiler bug where nested types with value generic parameters declared
         ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
-        public struct Inline<let bucketCapacity: Int>: ~Copyable {
+        public struct Static<let bucketCapacity: Int>: ~Copyable {
             // MARK: - Type Aliases (mirror parent for convenience)
 
             /// Bucket marker type (mirrors parent).
@@ -337,5 +337,5 @@ extension Hash {
 extension Hash.Table: Copyable where Element: Copyable {}
 extension Hash.Table: @unchecked Sendable where Element: ~Copyable {}
 
-extension Hash.Table.Inline: Copyable where Element: Copyable {}
-extension Hash.Table.Inline: @unchecked Sendable where Element: Sendable {}
+extension Hash.Table.Static: Copyable where Element: Copyable {}
+extension Hash.Table.Static: @unchecked Sendable where Element: Sendable {}

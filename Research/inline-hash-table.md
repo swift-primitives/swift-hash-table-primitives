@@ -18,20 +18,20 @@ The hash-table-primitives package provides `Hash.Table<Element>`, a heap-allocat
 
 ### Consumer Types
 
-Four types would benefit from `Hash.Table.Inline`:
+Four types would benefit from `Hash.Table.Static`:
 
 | Type | Package | Current Approach |
 |------|---------|------------------|
-| `Dictionary.Ordered.Inline<capacity>` | dictionary-primitives | `_hashTable` field declared but **unused** — O(n) linear search |
+| `Dictionary.Ordered.Static<capacity>` | dictionary-primitives | `_hashTable` field declared but **unused** — O(n) linear search |
 | `Dictionary.Ordered.Small<inlineCapacity>` | dictionary-primitives | Linear search in inline mode |
 | `Set.Ordered.Static<capacity>` | set-primitives | O(n) linear search |
 | `Set.Ordered.Small<inlineCapacity>` | set-primitives | O(n) linear search in inline mode |
 
-**Critical finding**: `Dictionary.Ordered.Inline` declares `_hashTable: InlineArray<capacity, Int>` at line 262 but the `index(of:)` method at line 344-351 uses linear search, completely bypassing the hash table.
+**Critical finding**: `Dictionary.Ordered.Static` declares `_hashTable: InlineArray<capacity, Int>` at line 262 but the `index(of:)` method at line 344-351 uses linear search, completely bypassing the hash table.
 
 ## Question
 
-How should `Hash.Table.Inline<capacity>` be designed to provide fixed-capacity, stack-allocated hash table storage while:
+How should `Hash.Table.Static<capacity>` be designed to provide fixed-capacity, stack-allocated hash table storage while:
 1. Enabling O(1) average-case lookup for inline collections
 2. Maintaining API consistency with `Hash.Table`
 3. Following established inline storage patterns
@@ -41,7 +41,7 @@ How should `Hash.Table.Inline<capacity>` be designed to provide fixed-capacity, 
 
 ### Prior Art: Existing Inline Storage Patterns
 
-#### Storage.Inline<N> (storage-primitives)
+#### Storage.Static<N> (storage-primitives)
 
 **Location**: `/Users/coen/Developer/swift-primitives/swift-storage-primitives/Sources/Storage Primitives/Storage.swift:98-138`
 
@@ -130,7 +130,7 @@ public struct Inline<let bucketCapacity: Int>: ~Copyable {
 **Advantages**:
 - 50% memory savings: `bucketCapacity × 8` bytes
 - Simpler structure
-- Matches current (unused) `Dictionary.Ordered.Inline._hashTable` design
+- Matches current (unused) `Dictionary.Ordered.Static._hashTable` design
 
 **Disadvantages**:
 - Cannot distinguish deleted vs empty without additional encoding
@@ -223,7 +223,7 @@ InlineArray<(elementCapacity * 10) / 7, Int>  // Invalid
 
 ### API Surface
 
-Following the heap variant, `Hash.Table.Inline` should provide:
+Following the heap variant, `Hash.Table.Static` should provide:
 
 **Core operations**:
 ```swift
@@ -262,8 +262,8 @@ func forEach(_ body: (hash: Int, position: Index<Element>) -> Void)
 **Verdict**: Match heap variant — conditionally Copyable for API consistency.
 
 ```swift
-extension Hash.Table.Inline: Copyable where Element: Copyable {}
-extension Hash.Table.Inline: Sendable where Element: Sendable {}
+extension Hash.Table.Static: Copyable where Element: Copyable {}
+extension Hash.Table.Static: Sendable where Element: Sendable {}
 ```
 
 ### Overflow Handling
@@ -314,7 +314,7 @@ The 2× memory cost is acceptable:
 extension Hash.Table {
     /// A fixed-capacity hash table with inline storage.
     ///
-    /// `Hash.Table.Inline` stores hash-position pairs directly in the struct,
+    /// `Hash.Table.Static` stores hash-position pairs directly in the struct,
     /// avoiding heap allocation. Use for small, bounded collections.
     ///
     /// ## Bucket Capacity
@@ -385,13 +385,13 @@ extension Hash.Table {
     }
 }
 
-extension Hash.Table.Inline: Copyable where Element: Copyable {}
-extension Hash.Table.Inline: Sendable where Element: Sendable {}
+extension Hash.Table.Static: Copyable where Element: Copyable {}
+extension Hash.Table.Static: Sendable where Element: Sendable {}
 ```
 
 ### Migration Path for Consumers
 
-1. **Dictionary.Ordered.Inline**: Replace unused `_hashTable` with `Hash.Table<Key>.Inline<capacity>`
+1. **Dictionary.Ordered.Static**: Replace unused `_hashTable` with `Hash.Table<Key>.Inline<capacity>`
 2. **Dictionary.Ordered.Small**: Use `Hash.Table<Key>.Inline` in inline mode
 3. **Set.Ordered.Static**: Add `Hash.Table<Element>.Inline<capacity>` for O(1) lookup
 4. **Set.Ordered.Small**: Use `Hash.Table<Element>.Inline` in inline mode
@@ -404,20 +404,20 @@ Following one-type-per-file convention:
 swift-hash-table-primitives/Sources/
 ├── Hash Table Primitives Core/
 │   ├── Hash.Table.swift              (existing)
-│   ├── Hash.Table.Inline.swift       (new - type definition)
+│   ├── Hash.Table.Static.swift       (new - type definition)
 ├── Hash Table Primitives/
 │   ├── Hash.Table+Lookup.swift       (existing)
 │   ├── Hash.Table+Insertion.swift    (existing)
 │   ├── Hash.Table+Removal.swift      (existing)
-│   ├── Hash.Table.Inline+Lookup.swift     (new)
-│   ├── Hash.Table.Inline+Insertion.swift  (new)
-│   ├── Hash.Table.Inline+Removal.swift    (new)
-│   ├── Hash.Table.Inline+Position.swift   (new - decrementPositions)
+│   ├── Hash.Table.Static+Lookup.swift     (new)
+│   ├── Hash.Table.Static+Insertion.swift  (new)
+│   ├── Hash.Table.Static+Removal.swift    (new)
+│   ├── Hash.Table.Static+Position.swift   (new - decrementPositions)
 ```
 
 ## Open Questions
 
-1. **Should `Hash.Table.Inline` share a protocol with `Hash.Table`?**
+1. **Should `Hash.Table.Static` share a protocol with `Hash.Table`?**
    - Pro: Generic algorithms could work with both
    - Con: Protocol overhead, may complicate `~Copyable` handling
    - Tentative: No protocol initially, add if pattern emerges
@@ -449,24 +449,24 @@ swift-hash-table-primitives/Sources/
 
 **Files created**:
 - `Hash.Table.swift` — type definition added as nested struct
-- `Hash.Table.Inline+Properties.swift` — count, isEmpty, capacity, shouldGrow, isFull
-- `Hash.Table.Inline+Lookup.swift` — position, bucketIndex, contains
-- `Hash.Table.Inline+Insertion.swift` — insert, insert(__unchecked:)
-- `Hash.Table.Inline+Removal.swift` — remove, removeAll, rehash
-- `Hash.Table.Inline+PositionUpdates.swift` — decrementPositions, updatePosition
-- `Hash.Table.Inline+ForEach.swift` — forEachOccupied, forEachPosition
-- `Hash.Table.Inline.Tests.swift` — 14 tests
+- `Hash.Table.Static+Properties.swift` — count, isEmpty, capacity, shouldGrow, isFull
+- `Hash.Table.Static+Lookup.swift` — position, bucketIndex, contains
+- `Hash.Table.Static+Insertion.swift` — insert, insert(__unchecked:)
+- `Hash.Table.Static+Removal.swift` — remove, removeAll, rehash
+- `Hash.Table.Static+PositionUpdates.swift` — decrementPositions, updatePosition
+- `Hash.Table.Static+ForEach.swift` — forEachOccupied, forEachPosition
+- `Hash.Table.Static.Tests.swift` — 14 tests
 
 **Remaining work** (separate tasks):
-1. Migrate `Dictionary.Ordered.Inline` to use `Hash.Table.Inline`
-2. Update `Set.Ordered.Static` to use `Hash.Table.Inline`
+1. Migrate `Dictionary.Ordered.Static` to use `Hash.Table.Static`
+2. Update `Set.Ordered.Static` to use `Hash.Table.Static`
 3. Update `Dictionary.Ordered.Small` and `Set.Ordered.Small` inline modes
 
 ## References
 
-- `Storage.Inline<N>`: `/Users/coen/Developer/swift-primitives/swift-storage-primitives/Sources/Storage Primitives/Storage.swift:98-138`
+- `Storage.Static<N>`: `/Users/coen/Developer/swift-primitives/swift-storage-primitives/Sources/Storage Primitives/Storage.swift:98-138`
 - `Array.Static<N>`: `/Users/coen/Developer/swift-primitives/swift-array-primitives/Sources/Array Primitives Core/Array.swift:155-186`
 - `Hash.Table`: `/Users/coen/Developer/swift-primitives/swift-hash-table-primitives/Sources/Hash Table Primitives Core/Hash.Table.swift`
-- `Dictionary.Ordered.Inline` (unused hash table): `/Users/coen/Developer/swift-primitives/swift-dictionary-primitives/Sources/Dictionary Primitives Core/Dictionary.Ordered.swift:251-297`
-- `Dictionary.Ordered.Inline.index(of:)` (linear search): `/Users/coen/Developer/swift-primitives/swift-dictionary-primitives/Sources/Dictionary Primitives Core/Dictionary.Ordered ~Copyable.swift:344-351`
+- `Dictionary.Ordered.Static` (unused hash table): `/Users/coen/Developer/swift-primitives/swift-dictionary-primitives/Sources/Dictionary Primitives Core/Dictionary.Ordered.swift:251-297`
+- `Dictionary.Ordered.Static.index(of:)` (linear search): `/Users/coen/Developer/swift-primitives/swift-dictionary-primitives/Sources/Dictionary Primitives Core/Dictionary.Ordered ~Copyable.swift:344-351`
 - `Set.Ordered.Static`: `/Users/coen/Developer/swift-primitives/swift-set-primitives/Sources/Set Primitives Core/Set.swift:87-122`

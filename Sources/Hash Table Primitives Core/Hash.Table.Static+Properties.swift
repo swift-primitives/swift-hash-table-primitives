@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Hash.Table.Inline where Element: ~Copyable {
+extension Hash.Table.Static where Element: ~Copyable {
     /// The number of active elements in the hash table.
     @inlinable
     public var count: Index<Element>.Count { _count }

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Hash.Table.Inline where Element: ~Copyable {
+extension Hash.Table.Static where Element: ~Copyable {
     /// Inserts an element's position into the hash table.
     ///
     /// Uses linear probing to find an empty or deleted bucket. Reuses

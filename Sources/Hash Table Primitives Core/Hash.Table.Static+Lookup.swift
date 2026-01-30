@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Hash.Table.Inline where Element: ~Copyable {
+extension Hash.Table.Static where Element: ~Copyable {
     /// Finds the position for an element with the given hash value.
     ///
     /// Uses linear probing to search for the element. The `equals` closure

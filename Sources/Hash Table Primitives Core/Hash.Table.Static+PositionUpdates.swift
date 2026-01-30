@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Hash.Table.Inline where Element: ~Copyable {
+extension Hash.Table.Static where Element: ~Copyable {
     /// Updates positions after an element is removed from external storage.
     ///
     /// When an element at `removedPosition` is removed from external storage

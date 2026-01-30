@@ -16,7 +16,7 @@ import Hash_Table_Primitives_Test_Support
 // Test element type for phantom typing
 private struct InlineTestElement {}
 
-@Suite("Hash.Table.Inline Tests")
+@Suite("Hash.Table.Static Tests")
 struct HashTableInlineTests {
 
     @Test("Empty inline hash table")

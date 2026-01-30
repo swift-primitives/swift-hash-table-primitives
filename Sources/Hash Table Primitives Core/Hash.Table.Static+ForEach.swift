@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Hash.Table.Inline where Element: ~Copyable {
+extension Hash.Table.Static where Element: ~Copyable {
     /// Iterates over all occupied buckets (non-empty, non-deleted).
     ///
     /// - Parameter body: A closure called with the bucket index, stored hash value,

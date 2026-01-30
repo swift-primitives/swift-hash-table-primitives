@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Hash.Table.Inline where Element: ~Copyable {
+extension Hash.Table.Static where Element: ~Copyable {
     /// Removes an element from the hash table.
     ///
     /// Marks the bucket as deleted (tombstone) to maintain probe chain integrity.
