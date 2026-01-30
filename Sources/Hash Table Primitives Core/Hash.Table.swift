@@ -227,6 +227,108 @@ extension Hash {
             let hash = hashValue == 0 ? 1 : hashValue
             return hash == Int.min ? 1 : hash
         }
+
+        // MARK: - Inline (Fixed-Capacity, Inline Storage)
+
+        /// A fixed-capacity hash table with inline storage.
+        ///
+        /// `Hash.Table.Inline` stores hash-position pairs directly in the struct,
+        /// avoiding heap allocation. Use for small, bounded collections where
+        /// O(1) lookup is needed without heap overhead.
+        ///
+        /// ## Bucket Capacity
+        ///
+        /// The `bucketCapacity` parameter specifies the number of hash buckets.
+        /// MUST be a power of two (8, 16, 32, 64, ...).
+        ///
+        /// Effective element capacity is approximately 70% of bucket count:
+        ///
+        /// | Buckets | Max elements |
+        /// |---------|--------------|
+        /// | 8       | ~5           |
+        /// | 16      | ~11          |
+        /// | 32      | ~22          |
+        /// | 64      | ~44          |
+        ///
+        /// ## Memory Layout
+        ///
+        /// Size: `bucketCapacity × 16 + ~32` bytes (hashes + positions + header).
+        ///
+        /// - Note: This type is declared inside `Hash.Table` (not in an extension) due to a
+        ///   Swift compiler bug where nested types with value generic parameters declared
+        ///   in extensions do not properly inherit `~Copyable` constraints from the outer type.
+        public struct Inline<let bucketCapacity: Int>: ~Copyable {
+            // MARK: - Type Aliases (mirror parent for convenience)
+
+            /// Bucket marker type (mirrors parent).
+            public typealias Bucket = Table.Bucket
+
+            /// Typed bucket index (mirrors parent).
+            public typealias BucketIndex = Table.BucketIndex
+
+            // MARK: - Sentinels (mirror parent)
+
+            /// Sentinel value indicating an empty bucket.
+            @inlinable
+            public static var empty: Int { Table.empty }
+
+            /// Sentinel value indicating a deleted bucket (tombstone).
+            @inlinable
+            public static var deleted: Int { Table.deleted }
+
+            /// Normalizes a hash value to avoid sentinel collisions.
+            @inlinable
+            public static func normalize(_ hashValue: Int) -> Int {
+                Table.normalize(hashValue)
+            }
+
+            // MARK: - Storage
+
+            /// Hash values for each bucket. 0 = empty, Int.min = deleted.
+            @usableFromInline
+            var _hashes: InlineArray<bucketCapacity, Int>
+
+            /// Element positions for each bucket.
+            @usableFromInline
+            var _positions: InlineArray<bucketCapacity, Int>
+
+            /// Number of active elements.
+            @usableFromInline
+            var _count: Index<Element>.Count
+
+            /// Number of occupied buckets (including deleted).
+            @usableFromInline
+            var _occupied: BucketIndex.Count
+
+            /// Creates an empty inline hash table.
+            ///
+            /// - Precondition: `bucketCapacity` must be a power of two.
+            @inlinable
+            public init() {
+                precondition(
+                    bucketCapacity > 0 && (bucketCapacity & (bucketCapacity - 1)) == 0,
+                    "bucketCapacity must be a power of two"
+                )
+                _hashes = .init(repeating: Table.empty)
+                _positions = .init(repeating: 0)
+                _count = .zero
+                _occupied = .zero
+            }
+
+            // MARK: - Internal Bucket Access
+
+            /// Computes the initial bucket index for a normalized hash.
+            @inlinable
+            func bucketFor(hash: Int) -> Int {
+                hash & (bucketCapacity - 1)
+            }
+
+            /// Computes the next bucket in the linear probe sequence.
+            @inlinable
+            func nextBucket(_ bucket: Int) -> Int {
+                (bucket + 1) & (bucketCapacity - 1)
+            }
+        }
     }
 }
 
@@ -234,3 +336,6 @@ extension Hash {
 
 extension Hash.Table: Copyable where Element: Copyable {}
 extension Hash.Table: @unchecked Sendable where Element: ~Copyable {}
+
+extension Hash.Table.Inline: Copyable where Element: Copyable {}
+extension Hash.Table.Inline: @unchecked Sendable where Element: Sendable {}
