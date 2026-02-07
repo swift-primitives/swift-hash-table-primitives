@@ -24,21 +24,22 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Complexity: O(1) average, O(n) worst case.
     @inlinable
     public borrowing func position(
-        forHash hashValue: Int,
+        forHash hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
     ) -> Index<Element>? {
         let hash = Self.normalize(hashValue)
         var bucket = bucketFor(hash: hash)
 
         while true {
-            let storedHash = _hashes[bucket]
+            let bi = Int(bitPattern: bucket.position.rawValue)
+            let storedHash = _hashes[bi]
 
             if storedHash == Self.empty {
                 return nil
             }
 
             if storedHash == hash {
-                let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bucket])))
+                let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
                 if equals(position) {
                     return position
                 }
@@ -58,21 +59,22 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Returns: The bucket index if found, or `nil`.
     @inlinable
     public borrowing func bucketIndex(
-        forHash hashValue: Int,
+        forHash hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
-    ) -> Int? {
+    ) -> BucketIndex? {
         let hash = Self.normalize(hashValue)
         var bucket = bucketFor(hash: hash)
 
         while true {
-            let storedHash = _hashes[bucket]
+            let bi = Int(bitPattern: bucket.position.rawValue)
+            let storedHash = _hashes[bi]
 
             if storedHash == Self.empty {
                 return nil
             }
 
             if storedHash == hash {
-                let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bucket])))
+                let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
                 if equals(position) {
                     return bucket
                 }
@@ -91,7 +93,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Returns: `true` if the element exists, `false` otherwise.
     @inlinable
     public borrowing func contains(
-        hashValue: Int,
+        hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
     ) -> Bool {
         position(forHash: hashValue, equals: equals) != nil

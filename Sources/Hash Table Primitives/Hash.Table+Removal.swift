@@ -23,7 +23,7 @@ extension Hash.Table where Element: ~Copyable {
     @inlinable
     @discardableResult
     public mutating func remove(
-        hashValue: Int,
+        hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
     ) -> Index<Element>? {
         guard let bucketIdx = bucketIndex(forHash: hashValue, equals: equals) else {

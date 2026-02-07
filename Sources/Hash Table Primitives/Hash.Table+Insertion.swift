@@ -11,7 +11,6 @@
 
 public import Hash_Table_Primitives_Core
 public import Cardinal_Primitives
-public import Ordinal_Primitives
 
 extension Hash.Table where Element: ~Copyable {
     /// Inserts an element's position into the hash table.
@@ -26,7 +25,7 @@ extension Hash.Table where Element: ~Copyable {
     @discardableResult
     public mutating func insert(
         position: Index<Element>,
-        hashValue: Int,
+        hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
     ) -> Bool {
         if shouldGrow {
@@ -79,7 +78,7 @@ extension Hash.Table where Element: ~Copyable {
     public mutating func insert(
         __unchecked: Void,
         position: Index<Element>,
-        hashValue: Int
+        hashValue: Hash.Value
     ) {
         if shouldGrow {
             grow()
@@ -116,18 +115,19 @@ extension Hash.Table where Element: ~Copyable {
         let oldCapInt = Int(oldCapacity.rawValue.rawValue)
         let newCapacity = Index<Bucket>.Count(Cardinal(UInt(max(8, oldCapInt * 2))))
         let newStorage = Storage.create(capacity: newCapacity)
-        let newCapInt = Int(newCapacity.rawValue.rawValue)
 
         for i in 0..<oldCapInt {
             let bucketIdx = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
             let hash = _storage.readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
                 let position = _storage.readPosition(at: bucketIdx)
-                var targetBucket = BucketIndex(__unchecked: (), Ordinal(UInt(hash & (newCapInt - 1))))
+                var targetBucket = BucketIndex(
+                    __unchecked: (),
+                    Ordinal(UInt(bitPattern: hash)) % newCapacity.rawValue
+                )
 
                 while newStorage.readHash(at: targetBucket) != Self.empty {
-                    let next = (Int(bitPattern: targetBucket.position.rawValue) + 1) & (newCapInt - 1)
-                    targetBucket = BucketIndex(__unchecked: (), Ordinal(UInt(next)))
+                    targetBucket = Modular.successor(of: targetBucket, capacity: newCapacity)
                 }
 
                 newStorage.writeHash(at: targetBucket, value: hash)

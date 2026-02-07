@@ -11,8 +11,8 @@
 
 public import Hash_Primitives
 public import Index_Primitives
-public import Ordinal_Primitives
 public import Cardinal_Primitives
+public import Cyclic_Index_Primitives
 
 extension Hash {
     /// A hash table mapping elements to their typed indices in external storage.
@@ -222,8 +222,9 @@ extension Hash {
         /// Maps `0` to `1` (since `0` is the empty sentinel).
         /// Maps `Int.min` to `1` (since `Int.min` is the deleted sentinel).
         @inlinable
-        public static func normalize(_ hashValue: Int) -> Int {
-            let hash = hashValue == 0 ? 1 : hashValue
+        public static func normalize(_ hashValue: Hash.Value) -> Int {
+            let raw = hashValue.rawValue
+            let hash = raw == 0 ? 1 : raw
             return hash == Int.min ? 1 : hash
         }
 
@@ -277,7 +278,7 @@ extension Hash {
 
             /// Normalizes a hash value to avoid sentinel collisions.
             @inlinable
-            public static func normalize(_ hashValue: Int) -> Int {
+            public static func normalize(_ hashValue: Hash.Value) -> Int {
                 Table.normalize(hashValue)
             }
 
@@ -317,15 +318,24 @@ extension Hash {
             // MARK: - Internal Bucket Access
 
             /// Computes the initial bucket index for a normalized hash.
+            ///
+            /// Maps the hash value into the cyclic bucket space [0, bucketCapacity)
+            /// using unsigned modular reduction.
             @inlinable
-            func bucketFor(hash: Int) -> Int {
-                hash & (bucketCapacity - 1)
+            func bucketFor(hash: Int) -> BucketIndex {
+                let bucketOrd = Ordinal(UInt(bitPattern: hash)) % Cardinal(UInt(bucketCapacity))
+                return BucketIndex(__unchecked: (), bucketOrd)
             }
 
             /// Computes the next bucket in the linear probe sequence.
+            ///
+            /// Uses cyclic arithmetic (Z_{bucketCapacity}) for wrap-around.
             @inlinable
-            func nextBucket(_ bucket: Int) -> Int {
-                (bucket + 1) & (bucketCapacity - 1)
+            func nextBucket(_ bucket: BucketIndex) -> BucketIndex {
+                Modular.successor(
+                    of: bucket,
+                    capacity: BucketIndex.Count(Cardinal(UInt(bucketCapacity)))
+                )
             }
         }
     }

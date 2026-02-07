@@ -21,7 +21,7 @@ struct HashTableInlineTests {
 
     @Test("Empty inline hash table")
     func emptyInlineHashTable() {
-        let table = Hash.Table<InlineTestElement>.Inline<16>()
+        let table = Hash.Table<InlineTestElement>.Static<16>()
         #expect(table.isEmpty == true)
         let expectedCount: Index<InlineTestElement>.Count = 0
         #expect(table.count == expectedCount)
@@ -31,7 +31,7 @@ struct HashTableInlineTests {
 
     @Test("Insert and lookup")
     func insertAndLookup() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert position 0 with hash 42
         let position: Index<InlineTestElement> = 0
@@ -51,7 +51,7 @@ struct HashTableInlineTests {
 
     @Test("Duplicate rejection")
     func duplicateRejection() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position0: Index<InlineTestElement> = 0
         let position1: Index<InlineTestElement> = 1
@@ -67,7 +67,7 @@ struct HashTableInlineTests {
 
     @Test("Removal with tombstone")
     func removalWithTombstone() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position0: Index<InlineTestElement> = 0
         let position1: Index<InlineTestElement> = 1
@@ -92,7 +92,7 @@ struct HashTableInlineTests {
 
     @Test("Position decrement after removal")
     func positionDecrementAfterRemoval() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert positions 0, 1, 2
         let position0: Index<InlineTestElement> = 0
@@ -115,13 +115,13 @@ struct HashTableInlineTests {
 
     @Test("Capacity limits - cannot grow")
     func capacityLimits() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<8>()
+        var table = Hash.Table<InlineTestElement>.Static<8>()
         // 8 buckets at 70% → ~5 elements before shouldGrow
 
         // Fill up to capacity
         for i in 0..<8 {
-            let position: Index<InlineTestElement> = try Index(i)
-            let hashValue = i * 17 + 1 // Unique hashes
+            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            let hashValue: Hash.Value = Hash.Value(__unchecked: (), i * 17 + 1) // Unique hashes
             let result = table.insert(position: position, hashValue: hashValue, equals: { _ in false })
             // First 5 should succeed easily, then depends on load factor
             if i < 5 {
@@ -135,11 +135,11 @@ struct HashTableInlineTests {
 
     @Test("Remove all")
     func removeAll() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         for i in 0..<10 {
-            let position: Index<InlineTestElement> = try Index(i)
-            let hashValue = i * 3
+            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            let hashValue: Hash.Value = Hash.Value(__unchecked: (), i * 3)
             table.insert(position: position, hashValue: hashValue, equals: { _ in false })
         }
 
@@ -148,13 +148,13 @@ struct HashTableInlineTests {
         #expect(table.isEmpty == true)
         let expectedCount: Index<InlineTestElement>.Count = 0
         #expect(table.count == expectedCount)
-        let expectedOccupied: Hash.Table<InlineTestElement>.Inline<16>.BucketIndex.Count = 0
+        let expectedOccupied: Hash.Table<InlineTestElement>.Static<16>.BucketIndex.Count = 0
         #expect(table.occupied == expectedOccupied)
     }
 
     @Test("Hash collision handling")
     func hashCollisionHandling() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert multiple elements with the same hash
         let position0: Index<InlineTestElement> = 0
@@ -175,18 +175,18 @@ struct HashTableInlineTests {
 
     @Test("Rehash removes tombstones")
     func rehashRemovesTombstones() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert 5 elements
         for i in 0..<5 {
-            let position: Index<InlineTestElement> = try Index(i)
-            table.insert(position: position, hashValue: i * 7, equals: { _ in false })
+            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            table.insert(position: position, hashValue: Hash.Value(__unchecked: (), i * 7), equals: { _ in false })
         }
 
         // Remove 3 elements (creates tombstones)
         for i in 0..<3 {
-            let position: Index<InlineTestElement> = try Index(i)
-            table.remove(hashValue: i * 7, equals: { $0 == position })
+            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            table.remove(hashValue: Hash.Value(__unchecked: (), i * 7), equals: { $0 == position })
         }
 
         let occupiedBefore = table.occupied
@@ -199,18 +199,20 @@ struct HashTableInlineTests {
         // Remaining elements should still be findable
         let position3: Index<InlineTestElement> = 3
         let position4: Index<InlineTestElement> = 4
-        #expect(table.position(forHash: 3 * 7, equals: { $0 == position3 }) == position3)
-        #expect(table.position(forHash: 4 * 7, equals: { $0 == position4 }) == position4)
+        let hash3: Hash.Value = Hash.Value(__unchecked: (), 3 * 7)
+        let hash4: Hash.Value = Hash.Value(__unchecked: (), 4 * 7)
+        #expect(table.position(forHash: hash3, equals: { $0 == position3 }) == position3)
+        #expect(table.position(forHash: hash4, equals: { $0 == position4 }) == position4)
     }
 
     @Test("ForEach iteration")
     func forEachIteration() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert 5 elements
         for i in 0..<5 {
-            let position: Index<InlineTestElement> = try Index(i)
-            table.insert(position: position, hashValue: i * 11, equals: { _ in false })
+            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            table.insert(position: position, hashValue: Hash.Value(__unchecked: (), i * 11), equals: { _ in false })
         }
 
         // Collect positions via forEach
@@ -221,14 +223,14 @@ struct HashTableInlineTests {
 
         // All original positions should be present
         for i in 0..<5 {
-            let position: Index<InlineTestElement> = try Index(i)
+            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
             #expect(positions.contains(position))
         }
     }
 
     @Test("Update position")
     func updatePosition() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position0: Index<InlineTestElement> = 0
         let position5: Index<InlineTestElement> = 5
@@ -246,7 +248,7 @@ struct HashTableInlineTests {
 
     @Test("Contains check")
     func containsCheck() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position: Index<InlineTestElement> = 0
         table.insert(position: position, hashValue: 42, equals: { _ in false })
@@ -257,7 +259,7 @@ struct HashTableInlineTests {
 
     @Test("Unchecked insert")
     func uncheckedInsert() throws {
-        var table = Hash.Table<InlineTestElement>.Inline<16>()
+        var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position0: Index<InlineTestElement> = 0
         let position1: Index<InlineTestElement> = 1
@@ -274,7 +276,7 @@ struct HashTableInlineTests {
 
     @Test("Copyable when Element is Copyable")
     func copyableWhenElementCopyable() throws {
-        var table = Hash.Table<Int>.Inline<16>()
+        var table = Hash.Table<Int>.Static<16>()
         table.insert(position: 0, hashValue: 42, equals: { _ in false })
 
         // Should be copyable

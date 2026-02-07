@@ -59,14 +59,14 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     @discardableResult
     public mutating func updatePosition(
-        forHash hashValue: Int,
+        forHash hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool,
         newPosition: Index<Element>
     ) -> Bool {
         guard let bucket = bucketIndex(forHash: hashValue, equals: equals) else {
             return false
         }
-        _positions[bucket] = Int(bitPattern: newPosition.position.rawValue)
+        _positions[Int(bitPattern: bucket.position.rawValue)] = Int(bitPattern: newPosition.position.rawValue)
         return true
     }
 
@@ -78,11 +78,12 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///
     /// - Precondition: The bucket must contain a valid element.
     @inlinable
-    public mutating func updatePosition(atBucket bucket: Int, newPosition: Index<Element>) {
+    public mutating func updatePosition(atBucket bucket: BucketIndex, newPosition: Index<Element>) {
+        let bi = Int(bitPattern: bucket.position.rawValue)
         precondition(
-            _hashes[bucket] != Self.empty && _hashes[bucket] != Self.deleted,
+            _hashes[bi] != Self.empty && _hashes[bi] != Self.deleted,
             "Cannot update position of empty or deleted bucket"
         )
-        _positions[bucket] = Int(bitPattern: newPosition.position.rawValue)
+        _positions[bi] = Int(bitPattern: newPosition.position.rawValue)
     }
 }

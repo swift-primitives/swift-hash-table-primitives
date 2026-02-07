@@ -21,15 +21,17 @@ extension Hash.Table where Element: ~Copyable {
     /// - Returns: The typed position in external storage if found, or `nil`.
     @inlinable
     public borrowing func position(
-        forHash hashValue: Int,
+        forHash hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
     ) -> Index<Element>? {
         let hash = Self.normalize(hashValue)
-        let capacity = Int(bitPattern: _storage.header.capacity)
-        var bucketInt = hash & (capacity - 1)
+        let capacity = _storage.header.capacity
+        var currentBucket = BucketIndex(
+            __unchecked: (),
+            Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
+        )
 
         while true {
-            let currentBucket = BucketIndex(__unchecked: (), Ordinal(UInt(bucketInt)))
             let storedHash = _storage.readHash(at: currentBucket)
 
             if storedHash == Self.empty {
@@ -43,7 +45,7 @@ extension Hash.Table where Element: ~Copyable {
                 }
             }
 
-            bucketInt = (bucketInt + 1) & (capacity - 1)
+            currentBucket = Modular.successor(of: currentBucket, capacity: capacity)
         }
     }
 
@@ -56,15 +58,17 @@ extension Hash.Table where Element: ~Copyable {
     /// - Returns: The bucket index if found, or `nil`.
     @inlinable
     public borrowing func bucketIndex(
-        forHash hashValue: Int,
+        forHash hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
     ) -> BucketIndex? {
         let hash = Self.normalize(hashValue)
-        let capacity = Int(bitPattern: _storage.header.capacity)
-        var bucketInt = hash & (capacity - 1)
+        let capacity = _storage.header.capacity
+        var currentBucket = BucketIndex(
+            __unchecked: (),
+            Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
+        )
 
         while true {
-            let currentBucket = BucketIndex(__unchecked: (), Ordinal(UInt(bucketInt)))
             let storedHash = _storage.readHash(at: currentBucket)
 
             if storedHash == Self.empty {
@@ -78,7 +82,7 @@ extension Hash.Table where Element: ~Copyable {
                 }
             }
 
-            bucketInt = (bucketInt + 1) & (capacity - 1)
+            currentBucket = Modular.successor(of: currentBucket, capacity: capacity)
         }
     }
 }

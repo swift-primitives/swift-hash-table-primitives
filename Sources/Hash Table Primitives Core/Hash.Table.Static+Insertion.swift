@@ -27,7 +27,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     @discardableResult
     public mutating func insert(
         position: Index<Element>,
-        hashValue: Int,
+        hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
     ) -> Bool {
         // Check if table is full
@@ -37,16 +37,18 @@ extension Hash.Table.Static where Element: ~Copyable {
 
         let hash = Self.normalize(hashValue)
         var currentBucket = bucketFor(hash: hash)
-        var firstDeleted: Int? = nil
+        var firstDeleted: BucketIndex? = nil
 
         while true {
-            let storedHash = _hashes[currentBucket]
+            let bi = Int(bitPattern: currentBucket.position.rawValue)
+            let storedHash = _hashes[bi]
 
             if storedHash == Self.empty {
                 // Found empty bucket - insert here or at first deleted
                 let insertBucket = firstDeleted ?? currentBucket
-                _hashes[insertBucket] = hash
-                _positions[insertBucket] = Int(bitPattern: position.position.rawValue)
+                let insertBI = Int(bitPattern: insertBucket.position.rawValue)
+                _hashes[insertBI] = hash
+                _positions[insertBI] = Int(bitPattern: position.position.rawValue)
                 _count = Index<Element>.Count(Cardinal(_count.rawValue.rawValue + 1))
                 if firstDeleted == nil {
                     _occupied = BucketIndex.Count(Cardinal(_occupied.rawValue.rawValue + 1))
@@ -61,7 +63,7 @@ extension Hash.Table.Static where Element: ~Copyable {
                 }
             } else if storedHash == hash {
                 // Hash match - check for duplicate
-                let existingPosition = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[currentBucket])))
+                let existingPosition = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
                 if equals(existingPosition) {
                     return false // Duplicate found
                 }
@@ -86,7 +88,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     public mutating func insert(
         __unchecked: Void,
         position: Index<Element>,
-        hashValue: Int
+        hashValue: Hash.Value
     ) -> Bool {
         if isFull {
             return false
@@ -96,11 +98,12 @@ extension Hash.Table.Static where Element: ~Copyable {
         var currentBucket = bucketFor(hash: hash)
 
         while true {
-            let storedHash = _hashes[currentBucket]
+            let bi = Int(bitPattern: currentBucket.position.rawValue)
+            let storedHash = _hashes[bi]
 
             if storedHash == Self.empty || storedHash == Self.deleted {
-                _hashes[currentBucket] = hash
-                _positions[currentBucket] = Int(bitPattern: position.position.rawValue)
+                _hashes[bi] = hash
+                _positions[bi] = Int(bitPattern: position.position.rawValue)
                 _count = Index<Element>.Count(Cardinal(_count.rawValue.rawValue + 1))
                 if storedHash == Self.empty {
                     _occupied = BucketIndex.Count(Cardinal(_occupied.rawValue.rawValue + 1))

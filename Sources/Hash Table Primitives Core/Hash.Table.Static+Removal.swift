@@ -24,15 +24,16 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     @discardableResult
     public mutating func remove(
-        hashValue: Int,
+        hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
     ) -> Index<Element>? {
         guard let bucket = bucketIndex(forHash: hashValue, equals: equals) else {
             return nil
         }
 
-        let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bucket])))
-        _hashes[bucket] = Self.deleted
+        let bi = Int(bitPattern: bucket.position.rawValue)
+        let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
+        _hashes[bi] = Self.deleted
         _count = Index<Element>.Count(Cardinal(_count.rawValue.rawValue - 1))
         // Note: _occupied does not decrease - tombstones still count as occupied
         return position
@@ -46,13 +47,14 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Precondition: The bucket must contain a valid element (not empty or deleted).
     @inlinable
     @discardableResult
-    public mutating func remove(atBucket bucket: Int) -> Index<Element> {
+    public mutating func remove(atBucket bucket: BucketIndex) -> Index<Element> {
+        let bi = Int(bitPattern: bucket.position.rawValue)
         precondition(
-            _hashes[bucket] != Self.empty && _hashes[bucket] != Self.deleted,
+            _hashes[bi] != Self.empty && _hashes[bi] != Self.deleted,
             "Cannot remove from empty or deleted bucket"
         )
-        let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bucket])))
-        _hashes[bucket] = Self.deleted
+        let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
+        _hashes[bi] = Self.deleted
         _count = Index<Element>.Count(Cardinal(_count.rawValue.rawValue - 1))
         return position
     }
@@ -97,11 +99,12 @@ extension Hash.Table.Static where Element: ~Copyable {
         // Reinsert all entries
         for entry in entries {
             var bucket = bucketFor(hash: entry.hash)
-            while _hashes[bucket] != Self.empty {
+            while _hashes[Int(bitPattern: bucket.position.rawValue)] != Self.empty {
                 bucket = nextBucket(bucket)
             }
-            _hashes[bucket] = entry.hash
-            _positions[bucket] = entry.position
+            let bi = Int(bitPattern: bucket.position.rawValue)
+            _hashes[bi] = entry.hash
+            _positions[bi] = entry.position
             _occupied = Index<Bucket>.Count(Cardinal(_occupied.rawValue.rawValue + 1))
         }
         // _count unchanged

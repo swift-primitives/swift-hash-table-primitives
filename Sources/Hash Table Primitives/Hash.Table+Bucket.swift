@@ -11,7 +11,6 @@
 
 public import Hash_Table_Primitives_Core
 public import Property_Primitives
-public import Ordinal_Primitives
 
 extension Hash.Table where Element: ~Copyable {
     /// Access bucket operations.
@@ -29,24 +28,27 @@ extension Hash.Table where Element: ~Copyable {
 
 extension Property.View.Typed
 where Tag == Hash.Table<Element>.BucketOps, Base == Hash.Table<Element>, Element: ~Copyable {
-    /// Computes the bucket for a hash value.
+    /// Computes the bucket for a normalized hash value.
     ///
-    /// Usage: `table.bucket.for(hash: hashValue)`
+    /// Maps the normalized hash value into the cyclic bucket space [0, capacity)
+    /// using unsigned modular reduction.
+    ///
+    /// - Parameter hash: A normalized hash value (output of `normalize()`).
     @inlinable
     public func `for`(hash: Int) -> Hash.Table<Element>.BucketIndex {
-        let cap = Int(unsafe base.pointee._storage.header.capacity.rawValue.rawValue)
-        let normalized = Hash.Table<Element>.normalize(hash)
-        let bucketInt = normalized & (cap - 1)
-        return Hash.Table<Element>.BucketIndex(__unchecked: (), Ordinal(UInt(bucketInt)))
+        let capacity = unsafe base.pointee._storage.header.capacity
+        let bucketOrd = Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
+        return Hash.Table<Element>.BucketIndex(__unchecked: (), bucketOrd)
     }
 
     /// Computes the next bucket in the probe sequence.
     ///
+    /// Uses cyclic arithmetic for wrap-around.
+    ///
     /// Usage: `table.bucket.next(currentBucket)`
     @inlinable
     public func next(_ bucket: Hash.Table<Element>.BucketIndex) -> Hash.Table<Element>.BucketIndex {
-        let cap = Int(unsafe base.pointee._storage.header.capacity.rawValue.rawValue)
-        let next = (Int(bitPattern: bucket.position.rawValue) + 1) & (cap - 1)
-        return Hash.Table<Element>.BucketIndex(__unchecked: (), Ordinal(UInt(next)))
+        let capacity = unsafe base.pointee._storage.header.capacity
+        return Modular.successor(of: bucket, capacity: capacity)
     }
 }

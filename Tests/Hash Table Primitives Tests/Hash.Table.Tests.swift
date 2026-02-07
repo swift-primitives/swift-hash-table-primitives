@@ -119,8 +119,8 @@ struct HashIndexTests {
 
         // Insert enough elements to trigger growth
         for i in 0..<20 {
-            let position: Index<TestElement> = try Index(i)
-            let hashValue = Int(bitPattern: position.position.rawValue) * 7
+            let position: Index<TestElement> = Index(Ordinal(UInt(i)))
+            let hashValue = Hash.Value(__unchecked: (), Int(bitPattern: position.position.rawValue) * 7)
             index.insert(position: position, hashValue: hashValue, equals: { _ in false })
         }
 
@@ -130,8 +130,8 @@ struct HashIndexTests {
 
         // All elements should still be findable
         for i in 0..<20 {
-            let position: Index<TestElement> = try Index(i)
-            let hashValue = Int(bitPattern: position.position.rawValue) * 7
+            let position: Index<TestElement> = Index(Ordinal(UInt(i)))
+            let hashValue = Hash.Value(__unchecked: (), Int(bitPattern: position.position.rawValue) * 7)
             #expect(index.position(forHash: hashValue, equals: { $0 == position }) == position)
         }
     }
@@ -141,8 +141,8 @@ struct HashIndexTests {
         var index = Hash.Table<TestElement>()
 
         for i in 0..<10 {
-            let position: Index<TestElement> = try Index(i)
-            let hashValue = Int(bitPattern: position.position.rawValue) * 3
+            let position: Index<TestElement> = Index(Ordinal(UInt(i)))
+            let hashValue = Hash.Value(__unchecked: (), Int(bitPattern: position.position.rawValue) * 3)
             index.insert(position: position, hashValue: hashValue, equals: { _ in false })
         }
 
@@ -161,8 +161,8 @@ struct HashIndexTests {
         var index = Hash.Table<TestElement>(minimumCapacity: initialCapacity)
 
         for i in 0..<50 {
-            let position: Index<TestElement> = try Index(i)
-            let hashValue = Int(bitPattern: position.position.rawValue) * 5
+            let position: Index<TestElement> = Index(Ordinal(UInt(i)))
+            let hashValue = Hash.Value(__unchecked: (), Int(bitPattern: position.position.rawValue) * 5)
             index.insert(position: position, hashValue: hashValue, equals: { _ in false })
         }
 

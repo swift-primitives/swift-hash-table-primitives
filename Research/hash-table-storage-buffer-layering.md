@@ -2,12 +2,13 @@
 
 <!--
 ---
-version: 1.0.0
-last_updated: 2026-02-06
-status: IN_PROGRESS
+version: 2.0.0
+last_updated: 2026-02-07
+status: DECISION (Provisional)
 research_tier: 2
-applies_to: [swift-hash-table-primitives, swift-buffer-primitives, swift-storage-primitives]
+applies_to: [swift-hash-table-primitives, swift-buffer-primitives, swift-storage-primitives, swift-hash-primitives]
 normative: false
+collaborative_review: Claude (Anthropic) + ChatGPT (OpenAI), 3 rounds, converged
 ---
 -->
 
@@ -217,23 +218,24 @@ If Hash.Table delegated to Buffer, it would be an index structure pretending to 
 
 ## Outcome
 
-**Status**: IN_PROGRESS
+**Status**: DECISION (Provisional)
 
-### Preliminary Finding
+**Decision**: Retain `Hash.Table.Storage : ManagedBuffer<Header, Int>` as a provisional implementation. The current design is **semantically incorrect** at the storage tier but **operationally sound**. It is tolerated until the required buffer-primitives infrastructure exists.
 
-Hash.Table's `Storage : ManagedBuffer<Header, Int>` **should NOT be replaced** with a buffer from buffer-primitives.
+### Why Provisional
 
-**Rationale**:
+The initial analysis (Options A-D above) correctly identifies that no **existing** buffer discipline fits Hash.Table. However, collaborative review (Claude + ChatGPT, 3 rounds) established that this is a signal that **buffer-primitives is incomplete**, not that Hash.Table is exempt from the layering pattern.
 
-1. **Hash.Table is an index structure, not a container**. It stores `Int` hash values and `Int` positions — trivial types with no lifecycle. The buffer-primitives machinery (initialization tracking, `~Copyable` element support, growth policies) solves problems that don't exist for Hash.Table
+The current design has three semantic violations (§Semantic Violations below). The principled end state requires three independent workstreams (§Principled Redesign below). Until those workstreams deliver, the current design is the best available implementation.
 
-2. **The dual-array, single-allocation layout is optimal**. Splitting into two buffers doubles heap allocations and loses cache locality. No buffer type supports the dual-array-in-one-allocation pattern
+### Operational Rationale (Why Current Design Is Tolerated)
 
-3. **Sentinel-based state is the correct encoding**. Hash tables need ternary state (empty/occupied/deleted). This is encoded naturally in the hash value with zero overhead. Buffer occupancy tracking (bitmap or count) adds overhead to encode the same information differently
+These arguments justify retaining the current design **provisionally**:
 
-4. **Growth semantics are incompatible**. Buffer growth preserves existing elements. Hash table growth requires complete rehashing. No buffer growth policy can express this
-
-5. **Ecosystem precedent**. Queue similarly creates its own `ManagedBuffer` subclass. Custom storage for specialized data structures is an established pattern
+1. **The dual-array, single-allocation layout is optimal**. Splitting into two buffers doubles heap allocations and loses cache locality. No buffer type supports the dual-array-in-one-allocation pattern
+2. **Growth semantics are incompatible with existing buffers**. Buffer growth preserves existing elements. Hash table growth requires complete rehashing. No buffer growth policy can express this
+3. **Ecosystem precedent**. Queue similarly creates its own custom `ManagedBuffer` subclass. Custom storage for specialized data structures is an established pattern when the data structure's internal requirements diverge from the generic storage contract
+4. **The API layer is already typed**. `Index<Bucket>`, `Index<Element>`, `BucketIndex`, typed counts — the public and package-level API respects the typed coordinate system. The violations are in the storage representation, not the semantic interface
 
 ### What This Research Clarifies About the Pattern
 
@@ -244,21 +246,127 @@ The storage→buffer→data structure→ADT layering pattern applies to **contai
 | Stack | Yes | Storage.Heap | Yes |
 | Queue | Yes | Custom ManagedBuffer + Buffer.Ring.Header | Yes |
 | Set.Ordered | Yes (via elementStorage) | Storage + Hash.Table (side-by-side) | Yes |
-| Hash.Table | No (stores indices) | Own ManagedBuffer | Yes |
+| Hash.Table | No (stores indices) | Own ManagedBuffer | Provisional |
 | Buffer.Linear/Ring/Slab | Yes | Storage.Heap / Storage.Inline | Yes |
 
-**Hash.Table is a leaf dependency** — it is consumed by container types (Set.Ordered, Dictionary.Ordered) alongside their element storage. It should not itself consume the storage-buffer stack.
+**Hash.Table is a leaf dependency** — it is consumed by container types (Set.Ordered, Dictionary.Ordered) alongside their element storage. It should not itself consume the **current** storage-buffer stack, but it should consume the **principled** stack once it exists.
 
-### Open Questions
+**Note on "index vs container" framing**: The initial analysis used this taxonomy as the primary justification. Collaborative review established that this distinction is rhetorically useful but structurally insufficient. The actual justification is the **representation constraints** (dual-array layout, ternary bucket state, rehash growth, single allocation). These are the load-bearing reasons, not the taxonomy.
 
-1. **Should Hash.Table.Storage be renamed?** The name `Storage` conflicts with the ecosystem's `Storage<Element>` from storage-primitives, even though they are in different namespaces. Options:
-   - Keep `Storage` (namespaced as `Hash.Table.Storage`, no actual conflict)
-   - Rename to `Allocation` or `Backing` or `Buckets` to clarify it's not the same pattern
-   - No action needed — the nesting makes the distinction clear
+---
 
-2. **Should Hash.Table gain `Memory.Contiguous.Protocol` conformance?** The dual-array layout could expose spans for bulk operations. This is orthogonal to the storage-buffer question.
+## Semantic Violations (Known and Accepted)
 
-3. **Could future Hash.Table variants benefit from Bit.Vector?** A Swiss-table-style SIMD probing design would use metadata bytes instead of sentinels. If we ever move to that design, `Bit.Vector` or a byte-vector could become relevant — but that would be a complete redesign, not a buffer substitution.
+The current design contains three semantic violations. These are documented as known debt, not as acceptable permanent state.
+
+### SV-1: Sentinel Encoding Mixes Concerns
+
+**Violation**: Bucket state (empty / occupied / deleted) is encoded in the hash value lane using sentinels (`0` = empty, `Int.min` = deleted). This means the hash value carries both "what is the hash?" and "what is the bucket state?" in a single `Int`.
+
+**Evidence**: The `normalize()` function maps `0 → 1` and `Int.min → 1` to avoid sentinel collisions. This is a normalization hack that exists solely because state and value share a domain.
+
+**Principled requirement**: Bucket state MUST be separate from hash value. Per-slot metadata should be an explicit type, not sentinel-encoded into the payload.
+
+### SV-2: Typed Values Stored as Raw Integers
+
+**Violation**: `Index<Element>` values are stored as bit-pattern-cast `Int` in the `ManagedBuffer`. The storage layer violates typed index semantics internally, even though the API boundary converts to/from typed coordinates on every access.
+
+**Evidence**: `Hash.Table.swift:170` — `positionsPointer[idx] = Int(bitPattern: value.position.rawValue)` stores a typed index as a raw integer. `Hash.Table.swift:156` reconstructs it via `Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: raw)))`.
+
+**Principled requirement**: Storage layers MUST NOT store typed values as raw integers. `Index<Element>` should be stored as `Index<Element>`, not as a bit-pattern-cast `Int` that happens to be layout-compatible.
+
+### SV-3: Bucket Arithmetic Uses Ad-Hoc Masking
+
+**Violation**: The probe sequence `hash & (capacity - 1)` and `(bucket + 1) & (capacity - 1)` are correct but model cyclic ring arithmetic (Z_{2^n}) using ad-hoc bitwise operations rather than the ecosystem's `Cyclic_Index_Primitives`.
+
+**Principled requirement**: Bucket arithmetic MUST be modeled as cyclic arithmetic using the existing `Cyclic_Index_Primitives` infrastructure.
+
+---
+
+## Principled Redesign (Future State)
+
+The principled end state requires three independent, non-blocking workstreams.
+
+### Workstream 1: `Hash.Value` Newtype (hash-primitives)
+
+**Status**: DONE — implemented as `Hash.Value = Tagged<Hash, Int>`. See `/Users/coen/Developer/swift-primitives/swift-hash-primitives/Research/hash-value-newtype.md`
+
+**Scope**: hash-primitives package
+
+**Requirement**: Introduce `Hash.Value` as a newtype over `Int` that:
+- Wraps the raw hash value from `Hashable.hashValue`
+- Owns normalization responsibility (currently in `Hash.Table.normalize()`)
+- Provides typed arithmetic for hash operations
+- Eliminates the "raw Int" from the hash domain
+
+**Dependency**: None. Can proceed immediately.
+
+### Workstream 2: Cyclic Bucket Arithmetic (hash-table-primitives)
+
+**Status**: DONE — replaced all ad-hoc masking with `Modular.successor` and `Ordinal % Cardinal` from `Cyclic_Index_Primitives`
+
+**Scope**: hash-table-primitives package
+
+**Requirement**: Replace ad-hoc masking with `Cyclic_Index_Primitives`:
+- Model `BucketIndex` as a cyclic index in Z_{2^n}
+- Probe advancement (`nextBucket`) becomes typed cyclic increment
+- Initial bucket computation (`bucketFor(hash:)`) becomes typed cyclic projection
+- Power-of-two capacity is enforced by the cyclic index type, not by runtime preconditions
+
+**Dependency**: `Cyclic_Index_Primitives` already exists (used by `Buffer.Ring`). No new infrastructure needed.
+
+### Workstream 3: Metadata-Parametric Random-Access Slots (buffer-primitives)
+
+**Status**: Research needed — separate research document required
+
+**Scope**: buffer-primitives package
+
+**Requirement**: A new buffer discipline that provides:
+1. **Fixed-capacity, addressable slots** — random access by typed index
+2. **Explicit per-slot metadata** — parameterized by metadata type `M`, not hard-coded
+3. **Typed payload storage** — no raw-Int representation leaks
+4. **No lifetime tracking** — payloads are overwrite-semantic, not init/deinit-semantic
+5. **No buffer-level growth** — growth is the consumer's responsibility (rehash-as-growth)
+6. **SwissTable-compatible** — metadata type must accommodate byte-granularity control bytes, not just enum states
+
+**Naming constraints** (locked, concrete name deferred to research):
+- MUST communicate random-access slots, not contiguity
+- MUST NOT encode hash-specific semantics
+- MUST fit Nest.Name without suffix inflation
+- MUST leave room for SwissTable-style metadata
+
+**Consumer analysis**: Hash.Table is the primary consumer today. The abstraction is justified because "random-access slots with per-slot metadata" is a **fundamental** data-structure primitive (hash tables, Swiss tables, Robin Hood tables, sparse tables with deletion markers, graph adjacency structures). Under the ecosystem's design philosophy, a missing fundamental abstraction is a design bug even with a single current consumer.
+
+**Dependency**: Requires its own Tier 2+ research document before implementation.
+
+### Migration Path
+
+Once all three workstreams deliver:
+
+1. `Hash.Table` adopts `Hash.Value` for hash storage (eliminates SV-1 partially)
+2. `Hash.Table` adopts cyclic bucket indices (eliminates SV-3)
+3. `Hash.Table` migrates to the new buffer discipline (eliminates SV-1 fully, SV-2)
+4. `Hash.Table.Storage : ManagedBuffer<Header, Int>` is removed
+5. `Hash.Table.Static` migrates analogously (inline variant of the new buffer)
+
+Each step is independently valuable. Steps 1-2 can proceed before step 3.
+
+---
+
+## Disposition of Original Open Questions
+
+1. **Hash.Table.Storage naming**: Moot. Storage will be replaced by the new buffer discipline. No renaming needed in the interim.
+
+2. **Memory.Contiguous.Protocol conformance**: Not applicable. The dual-array layout is a representation concern that will be resolved by the new buffer discipline. Protocol conformance should be evaluated after migration.
+
+3. **Future Swiss-table / SIMD probing**: Addressed by Workstream 3. The metadata-parametric buffer discipline is designed to accommodate Swiss-table control bytes as a natural instantiation.
+
+## Changelog
+
+| Version | Date | Change |
+|---------|------|--------|
+| 1.0.0 | 2026-02-06 | Initial analysis. Options A-D evaluated. DECISION: keep current design |
+| 2.0.0 | 2026-02-07 | Collaborative review (Claude + ChatGPT, 3 rounds). Reframed to DECISION (Provisional). Added Semantic Violations and Principled Redesign sections. Identified three independent workstreams |
 
 ## References
 
@@ -267,6 +375,8 @@ The storage→buffer→data structure→ADT layering pattern applies to **contai
 - `Hash.Table.swift`: `/Users/coen/Developer/swift-primitives/swift-hash-table-primitives/Sources/Hash Table Primitives Core/Hash.Table.swift`
 - Buffer primitives core: `/Users/coen/Developer/swift-primitives/swift-buffer-primitives/Sources/Buffer Primitives Core/Buffer.swift`
 - Storage primitives: `/Users/coen/Developer/swift-primitives/swift-storage-primitives/`
+- Cyclic index primitives: `/Users/coen/Developer/swift-primitives/swift-cyclic-index-primitives/`
+- Collaborative discussion transcript: `/tmp/hash-table-storage-layering-transcript.md`
 - CPython dict implementation: Objects/dictobject.c (sentinel-based open addressing)
 - Rust hashbrown: Swiss-table SIMD probing with control bytes
 - abseil flat_hash_map: Swiss-table variant

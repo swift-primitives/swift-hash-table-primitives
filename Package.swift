@@ -31,6 +31,7 @@ let package = Package(
         .package(path: "../swift-property-primitives"),
         .package(path: "../swift-ordinal-primitives"),
         .package(path: "../swift-cardinal-primitives"),
+        .package(path: "../swift-cyclic-index-primitives"),
     ],
     targets: [
         // Layer 1: Core type definitions (no constraint poisoning)
@@ -41,6 +42,7 @@ let package = Package(
                 .product(name: "Hash Primitives", package: "swift-hash-primitives"),
                 .product(name: "Ordinal Primitives", package: "swift-ordinal-primitives"),
                 .product(name: "Cardinal Primitives", package: "swift-cardinal-primitives"),
+                .product(name: "Cyclic Index Primitives", package: "swift-cyclic-index-primitives"),
             ]
         ),
         // Layer 2: Full API + re-export

@@ -18,13 +18,14 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Complexity: O(n) where n is bucket capacity.
     @inlinable
     public borrowing func forEachOccupied(
-        _ body: (_ bucket: Int, _ hash: Int, _ position: Index<Element>) -> Void
+        _ body: (_ bucket: BucketIndex, _ hash: Int, _ position: Index<Element>) -> Void
     ) {
         for i in 0..<bucketCapacity {
             let hash = _hashes[i]
             if hash != Self.empty && hash != Self.deleted {
+                let bucket = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
                 let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[i])))
-                body(i, hash, position)
+                body(bucket, hash, position)
             }
         }
     }
@@ -57,13 +58,14 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     @discardableResult
     public borrowing func forEachOccupiedWhile(
-        _ body: (_ bucket: Int, _ hash: Int, _ position: Index<Element>) -> Bool
+        _ body: (_ bucket: BucketIndex, _ hash: Int, _ position: Index<Element>) -> Bool
     ) -> Bool {
         for i in 0..<bucketCapacity {
             let hash = _hashes[i]
             if hash != Self.empty && hash != Self.deleted {
+                let bucket = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
                 let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[i])))
-                if !body(i, hash, position) {
+                if !body(bucket, hash, position) {
                     return false
                 }
             }
