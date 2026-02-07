@@ -11,7 +11,6 @@
 
 public import Hash_Primitives
 public import Index_Primitives
-public import Pointer_Primitives
 public import Ordinal_Primitives
 public import Cardinal_Primitives
 
@@ -125,18 +124,18 @@ extension Hash {
 
             /// Pointer to hash values array.
             @usableFromInline
-            package var hashesPointer: Pointer<Int>.Mutable {
+            package var hashesPointer: UnsafeMutablePointer<Int> {
                 unsafe withUnsafeMutablePointerToElements {
-                    unsafe Pointer<Int>.Mutable($0)
+                    unsafe $0
                 }
             }
 
             /// Pointer to positions array.
             @usableFromInline
-            package var positionsPointer: Pointer<Int>.Mutable {
+            package var positionsPointer: UnsafeMutablePointer<Int> {
                 let cap = Int(header.capacity.rawValue.rawValue)
                 return unsafe withUnsafeMutablePointerToElements {
-                    unsafe Pointer<Int>.Mutable($0 + cap)
+                    unsafe $0 + cap
                 }
             }
 

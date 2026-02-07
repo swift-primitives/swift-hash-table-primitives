@@ -28,7 +28,6 @@ let package = Package(
     dependencies: [
         .package(path: "../swift-index-primitives"),
         .package(path: "../swift-hash-primitives"),
-        .package(path: "../swift-pointer-primitives"),
         .package(path: "../swift-property-primitives"),
         .package(path: "../swift-ordinal-primitives"),
         .package(path: "../swift-cardinal-primitives"),
@@ -40,7 +39,6 @@ let package = Package(
             dependencies: [
                 .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Hash Primitives", package: "swift-hash-primitives"),
-                .product(name: "Pointer Primitives", package: "swift-pointer-primitives"),
                 .product(name: "Ordinal Primitives", package: "swift-ordinal-primitives"),
                 .product(name: "Cardinal Primitives", package: "swift-cardinal-primitives"),
             ]
