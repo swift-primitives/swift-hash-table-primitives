@@ -104,7 +104,7 @@ struct HashTableInlineTests {
 
         // Remove from external storage at position 1
         table.remove(hashValue: 20, equals: { $0 == position1 })
-        table.decrementPositions(after: position1)
+        table.positions.decrement(after: position1)
 
         // Position 0 unchanged
         #expect(table.position(forHash: 10, equals: { $0 == position0 }) == position0)
@@ -143,13 +143,13 @@ struct HashTableInlineTests {
             table.insert(position: position, hashValue: hashValue, equals: { _ in false })
         }
 
-        table.removeAll()
+        table.remove.all()
 
         #expect(table.isEmpty == true)
         let expectedCount: Index<InlineTestElement>.Count = 0
         #expect(table.count == expectedCount)
         let expectedOccupied: Hash.Table<InlineTestElement>.Static<16>.BucketIndex.Count = 0
-        #expect(table.occupied == expectedOccupied)
+        #expect(table.occupancy == expectedOccupied)
     }
 
     @Test("Hash collision handling")
@@ -189,9 +189,9 @@ struct HashTableInlineTests {
             table.remove(hashValue: Hash.Value(__unchecked: (), i * 7), equals: { $0 == position })
         }
 
-        let occupiedBefore = table.occupied
+        let occupiedBefore = table.occupancy
         table.rehash()
-        let occupiedAfter = table.occupied
+        let occupiedAfter = table.occupancy
 
         // Occupied should decrease (tombstones removed)
         #expect(occupiedAfter < occupiedBefore)
@@ -217,7 +217,7 @@ struct HashTableInlineTests {
 
         // Collect positions via forEach
         var positions: [Index<InlineTestElement>] = []
-        table.forEachPosition { positions.append($0) }
+        table.forEach.position { positions.append($0) }
 
         #expect(positions.count == 5)
 
@@ -237,7 +237,7 @@ struct HashTableInlineTests {
         table.insert(position: position0, hashValue: 42, equals: { _ in false })
 
         // Update position from 0 to 5
-        let updated = table.updatePosition(forHash: 42, equals: { $0 == position0 }, newPosition: position5)
+        let updated = table.positions.update(forHash: 42, equals: { $0 == position0 }, newPosition: position5)
         #expect(updated == true)
 
         // Now findable at position 5

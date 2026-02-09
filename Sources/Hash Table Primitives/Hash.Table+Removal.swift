@@ -11,6 +11,7 @@
 
 public import Hash_Table_Primitives_Core
 public import Cardinal_Primitives
+public import Property_Primitives
 
 extension Hash.Table where Element: ~Copyable {
     /// Removes an element from the hash table.
@@ -30,11 +31,9 @@ extension Hash.Table where Element: ~Copyable {
             return nil
         }
 
-        let position = _storage.readPosition(at: bucketIdx)
-        _storage.writeHash(at: bucketIdx, value: Self.deleted)
-        _storage.header.count = Index<Element>.Count(
-            Cardinal(_storage.header.count.rawValue.rawValue - 1)
-        )
+        let position = self[position: bucketIdx]
+        self[hash: bucketIdx] = Self.deleted
+        _count = _count.subtract.saturating(.one)
         return position
     }
 
@@ -44,30 +43,47 @@ extension Hash.Table where Element: ~Copyable {
     @inlinable
     public mutating func remove(at bucketIdx: BucketIndex) {
         precondition(
-            _storage.readHash(at: bucketIdx) != Self.empty &&
-            _storage.readHash(at: bucketIdx) != Self.deleted
+            self[hash: bucketIdx] != Self.empty &&
+            self[hash: bucketIdx] != Self.deleted
         )
-        _storage.writeHash(at: bucketIdx, value: Self.deleted)
-        _storage.header.count = Index<Element>.Count(
-            Cardinal(_storage.header.count.rawValue.rawValue - 1)
-        )
+        self[hash: bucketIdx] = Self.deleted
+        _count = _count.subtract.saturating(.one)
     }
 
-    /// Removes all elements from the hash table.
+    /// Access remove operations.
     @inlinable
-    public mutating func removeAll(keepingCapacity: Bool = false) {
+    public var remove: Property<Remove, Self>.View.Typed<Element> {
+        mutating _read {
+            yield unsafe Property<Remove, Self>.View.Typed(&self)
+        }
+        mutating _modify {
+            var view = unsafe Property<Remove, Self>.View.Typed<Element>(&self)
+            yield &view
+        }
+    }
+}
+
+extension Property.View.Typed
+where Tag == Hash.Table<Element>.Remove, Base == Hash.Table<Element>, Element: ~Copyable {
+    /// Removes all elements.
+    @_lifetime(&self)
+    @inlinable
+    public mutating func all(keepingCapacity: Bool = false) {
         if keepingCapacity {
-            let cap = Int(_storage.header.capacity.rawValue.rawValue)
-            for i in 0..<cap {
-                let bucketIdx = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
-                _storage.writeHash(at: bucketIdx, value: Self.empty)
-            }
-            _storage.header.count = .zero
-            _storage.header.occupied = .zero
+            unsafe base.pointee._buffer.fill(metadata: Hash.Table<Element>.empty)
+            unsafe base.pointee._buffer.fill(payload: 0)
+            unsafe base.pointee._count = .zero
+            unsafe base.pointee._occupied = .zero
         } else {
-            // Create new storage with default capacity
-            let hashCapacity = Self.bucketCapacity(for: .zero)
-            _storage = Storage.create(capacity: hashCapacity)
+            let hashCapacity = Hash.Table<Element>.bucketCapacity(for: .zero)
+            let buffer = Buffer<Int>.Slots<Int>(
+                capacity: hashCapacity.retag(Int.self),
+                metadataInitial: Hash.Table<Element>.empty
+            )
+            buffer.fill(payload: 0)
+            unsafe base.pointee._buffer = buffer
+            unsafe base.pointee._count = .zero
+            unsafe base.pointee._occupied = .zero
         }
     }
 }

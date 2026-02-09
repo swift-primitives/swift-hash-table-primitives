@@ -31,10 +31,9 @@ extension Hash.Table.Static where Element: ~Copyable {
             return nil
         }
 
-        let bi = Int(bitPattern: bucket.position.rawValue)
-        let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
-        _hashes[bi] = Self.deleted
-        _count = Index<Element>.Count(Cardinal(_count.rawValue.rawValue - 1))
+        let position = readPosition(at: bucket)
+        writeHash(at: bucket, value: Self.deleted)
+        _count = _count.subtract.saturating(.one)
         // Note: _occupied does not decrease - tombstones still count as occupied
         return position
     }
@@ -48,24 +47,21 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     @discardableResult
     public mutating func remove(atBucket bucket: BucketIndex) -> Index<Element> {
-        let bi = Int(bitPattern: bucket.position.rawValue)
         precondition(
-            _hashes[bi] != Self.empty && _hashes[bi] != Self.deleted,
+            readHash(at: bucket) != Self.empty && readHash(at: bucket) != Self.deleted,
             "Cannot remove from empty or deleted bucket"
         )
-        let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
-        _hashes[bi] = Self.deleted
-        _count = Index<Element>.Count(Cardinal(_count.rawValue.rawValue - 1))
+        let position = readPosition(at: bucket)
+        writeHash(at: bucket, value: Self.deleted)
+        _count = _count.subtract.saturating(.one)
         return position
     }
 
-    /// Removes all elements from the hash table.
-    ///
-    /// Resets all buckets to empty state, clearing tombstones.
+    /// Clears all buckets (internal helper for Property accessor).
     @inlinable
-    public mutating func removeAll() {
-        for i in 0..<bucketCapacity {
-            _hashes[i] = Self.empty
+    package mutating func clearAll() {
+        Self.forEachBucketIndex { bucketIdx in
+            writeHash(at: bucketIdx, value: Self.empty)
         }
         _count = .zero
         _occupied = .zero
@@ -80,32 +76,31 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     public mutating func rehash() {
         // Collect all active entries
-        var entries: [(hash: Int, position: Int)] = []
+        var entries: [(hash: Int, position: Index<Element>)] = []
         entries.reserveCapacity(Int(bitPattern: _count))
 
-        for i in 0..<bucketCapacity {
-            let hash = _hashes[i]
+        Self.forEachBucketIndex { bucketIdx in
+            let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
-                entries.append((hash: hash, position: _positions[i]))
+                entries.append((hash: hash, position: readPosition(at: bucketIdx)))
             }
         }
 
         // Clear all buckets
-        for i in 0..<bucketCapacity {
-            _hashes[i] = Self.empty
+        Self.forEachBucketIndex { bucketIdx in
+            writeHash(at: bucketIdx, value: Self.empty)
         }
         _occupied = .zero
 
         // Reinsert all entries
         for entry in entries {
-            var bucket = bucketFor(hash: entry.hash)
-            while _hashes[Int(bitPattern: bucket.position.rawValue)] != Self.empty {
-                bucket = nextBucket(bucket)
+            var targetBucket = bucket(for: entry.hash)
+            while readHash(at: targetBucket) != Self.empty {
+                targetBucket = bucket(after: targetBucket)
             }
-            let bi = Int(bitPattern: bucket.position.rawValue)
-            _hashes[bi] = entry.hash
-            _positions[bi] = entry.position
-            _occupied = Index<Bucket>.Count(Cardinal(_occupied.rawValue.rawValue + 1))
+            writeHash(at: targetBucket, value: entry.hash)
+            writePosition(at: targetBucket, value: entry.position)
+            _occupied = _occupied + .one
         }
         // _count unchanged
     }

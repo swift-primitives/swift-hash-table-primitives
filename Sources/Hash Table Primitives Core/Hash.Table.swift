@@ -13,6 +13,7 @@ public import Hash_Primitives
 public import Index_Primitives
 public import Cardinal_Primitives
 public import Cyclic_Index_Primitives
+public import Buffer_Slots_Primitives
 
 extension Hash {
     /// A hash table mapping elements to their typed indices in external storage.
@@ -73,108 +74,22 @@ extension Hash {
         /// Tag type for forEach operations.
         public enum ForEach {}
 
-        /// Header for hash table storage.
-        @usableFromInline
-        package struct Header: Sendable {
-            /// Number of active elements in the hash table.
-            @usableFromInline
-            package var count: Index<Element>.Count
+        /// Tag type for remove operations.
+        public enum Remove {}
 
-            /// Number of occupied buckets (including deleted).
-            @usableFromInline
-            package var occupied: Index<Bucket>.Count
-
-            /// Total number of buckets.
-            @usableFromInline
-            package var capacity: Index<Bucket>.Count
-
-            @inlinable
-            package init(capacity: Index<Bucket>.Count) {
-                self.count = .zero
-                self.occupied = .zero
-                self.capacity = capacity
-            }
-        }
-
-        /// Internal storage class using ManagedBuffer.
-        /// Stores hashes and positions in a single allocation.
-        /// Header contains (count, occupied, capacity).
-        /// Elements are laid out as: [hashes...][positions...]
-        @usableFromInline
-        package final class Storage: ManagedBuffer<Header, Int> {
-            deinit {
-                // ManagedBuffer handles deallocation automatically
-            }
-
-            /// Creates storage with the specified bucket capacity.
-            @usableFromInline
-            package static func create(capacity: Index<Bucket>.Count) -> Storage {
-                let cap = Int(capacity.rawValue.rawValue)
-                let storage = Storage.create(minimumCapacity: cap * 2) { _ in
-                    Header(capacity: capacity)
-                }
-                // Initialize all slots to empty (0)
-                _ = unsafe storage.withUnsafeMutablePointerToElements { elements in
-                    unsafe elements.initialize(repeating: Table.empty, count: cap * 2)
-                }
-                return unsafe unsafeDowncast(storage, to: Storage.self)
-            }
-
-            // MARK: - Typed Pointer Access
-
-            /// Pointer to hash values array.
-            @usableFromInline
-            package var hashesPointer: UnsafeMutablePointer<Int> {
-                unsafe withUnsafeMutablePointerToElements {
-                    unsafe $0
-                }
-            }
-
-            /// Pointer to positions array.
-            @usableFromInline
-            package var positionsPointer: UnsafeMutablePointer<Int> {
-                let cap = Int(header.capacity.rawValue.rawValue)
-                return unsafe withUnsafeMutablePointerToElements {
-                    unsafe $0 + cap
-                }
-            }
-
-            // MARK: - Typed Read/Write
-
-            /// Reads hash at bucket index.
-            @usableFromInline
-            package func readHash(at bucket: BucketIndex) -> Int {
-                let idx = Index<Int>(__unchecked: (), bucket.position)
-                return hashesPointer[idx]
-            }
-
-            /// Reads position at bucket index, returning typed Index<Element>.
-            @usableFromInline
-            package func readPosition(at bucket: BucketIndex) -> Index<Element> {
-                let idx = Index<Int>(__unchecked: (), bucket.position)
-                let raw = positionsPointer[idx]
-                return Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: raw)))
-            }
-
-            /// Writes hash at bucket index.
-            @usableFromInline
-            package func writeHash(at bucket: BucketIndex, value: Int) {
-                let idx = Index<Int>(__unchecked: (), bucket.position)
-                hashesPointer[idx] = value
-            }
-
-            /// Writes position at bucket index.
-            @usableFromInline
-            package func writePosition(at bucket: BucketIndex, value: Index<Element>) {
-                let idx = Index<Int>(__unchecked: (), bucket.position)
-                positionsPointer[idx] = Int(bitPattern: value.position.rawValue)
-            }
-        }
+        /// Tag type for position update operations.
+        public enum Positions {}
 
         // MARK: - Stored Properties
 
         @usableFromInline
-        package var _storage: Storage
+        package var _count: Index<Element>.Count
+
+        @usableFromInline
+        package var _occupied: Index<Bucket>.Count
+
+        @usableFromInline
+        package var _buffer: Buffer<Int>.Slots<Int>
 
         // MARK: - Sentinels
 
@@ -195,7 +110,14 @@ extension Hash {
         @inlinable
         public init(minimumCapacity: Index<Element>.Count = .zero) {
             let hashCapacity = Self.bucketCapacity(for: minimumCapacity)
-            _storage = Storage.create(capacity: hashCapacity)
+            _count = .zero
+            _occupied = .zero
+            let buffer = Buffer<Int>.Slots<Int>(
+                capacity: hashCapacity.retag(Int.self),
+                metadataInitial: Self.empty
+            )
+            buffer.fill(payload: 0)
+            _buffer = buffer
         }
 
         // MARK: - Core Utilities (needed by init)
@@ -206,7 +128,7 @@ extension Hash {
         /// Targets ~70% load factor.
         @inlinable
         public static func bucketCapacity(for minimumCapacity: Index<Element>.Count) -> Index<Bucket>.Count {
-            let minCap = Int(minimumCapacity.rawValue.rawValue)
+            let minCap = Int(bitPattern: minimumCapacity)
             guard minCap > 0 else {
                 return Index<Bucket>.Count(Cardinal(8))
             }
@@ -322,7 +244,7 @@ extension Hash {
             /// Maps the hash value into the cyclic bucket space [0, bucketCapacity)
             /// using unsigned modular reduction.
             @inlinable
-            func bucketFor(hash: Int) -> BucketIndex {
+            package func bucket(for hash: Int) -> BucketIndex {
                 let bucketOrd = Ordinal(UInt(bitPattern: hash)) % Cardinal(UInt(bucketCapacity))
                 return BucketIndex(__unchecked: (), bucketOrd)
             }
@@ -331,11 +253,47 @@ extension Hash {
             ///
             /// Uses cyclic arithmetic (Z_{bucketCapacity}) for wrap-around.
             @inlinable
-            func nextBucket(_ bucket: BucketIndex) -> BucketIndex {
-                Modular.successor(
-                    of: bucket,
+            package func bucket(after current: BucketIndex) -> BucketIndex {
+                BucketIndex.Modular.successor(
+                    of: current,
                     capacity: BucketIndex.Count(Cardinal(UInt(bucketCapacity)))
                 )
+            }
+
+            // MARK: - Bucket Iteration
+
+            /// Iterates over all bucket indices.
+            @inlinable
+            static func forEachBucketIndex(_ body: (BucketIndex) -> Void) {
+                for i in 0..<bucketCapacity {
+                    body(BucketIndex(__unchecked: (), Ordinal(UInt(i))))
+                }
+            }
+
+            // MARK: - Typed InlineArray Access
+
+            /// Reads the hash stored at the given bucket.
+            @inlinable
+            func readHash(at bucket: BucketIndex) -> Int {
+                _hashes[Int(bitPattern: bucket.position)]
+            }
+
+            /// Writes a hash value at the given bucket.
+            @inlinable
+            mutating func writeHash(at bucket: BucketIndex, value: Int) {
+                _hashes[Int(bitPattern: bucket.position)] = value
+            }
+
+            /// Reads the element position stored at the given bucket.
+            @inlinable
+            func readPosition(at bucket: BucketIndex) -> Index<Element> {
+                Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[Int(bitPattern: bucket.position)])))
+            }
+
+            /// Writes an element position at the given bucket.
+            @inlinable
+            mutating func writePosition(at bucket: BucketIndex, value: Index<Element>) {
+                _positions[Int(bitPattern: bucket.position)] = Int(bitPattern: value.position)
             }
         }
     }

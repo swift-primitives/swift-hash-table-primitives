@@ -102,7 +102,7 @@ struct HashIndexTests {
 
         // Remove from external storage at position 1
         index.remove(hashValue: 20, equals: { $0 == position1 })
-        index.decrementPositions(after: position1)
+        index.positions.decrement(after: position1)
 
         // Position 0 unchanged
         #expect(index.position(forHash: 10, equals: { $0 == position0 }) == position0)
@@ -147,7 +147,7 @@ struct HashIndexTests {
         }
 
         let capacityBefore = index.capacity
-        index.removeAll(keepingCapacity: true)
+        index.remove.all(keepingCapacity: true)
 
         #expect(index.isEmpty == true)
         let expectedCount: Index<TestElement>.Count = 0
@@ -166,7 +166,7 @@ struct HashIndexTests {
             index.insert(position: position, hashValue: hashValue, equals: { _ in false })
         }
 
-        index.removeAll(keepingCapacity: false)
+        index.remove.all(keepingCapacity: false)
 
         #expect(index.isEmpty == true)
         let expectedCount: Index<TestElement>.Count = 0

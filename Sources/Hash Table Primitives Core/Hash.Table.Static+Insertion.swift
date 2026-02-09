@@ -36,22 +36,20 @@ extension Hash.Table.Static where Element: ~Copyable {
         }
 
         let hash = Self.normalize(hashValue)
-        var currentBucket = bucketFor(hash: hash)
+        var currentBucket = bucket(for: hash)
         var firstDeleted: BucketIndex? = nil
 
         while true {
-            let bi = Int(bitPattern: currentBucket.position.rawValue)
-            let storedHash = _hashes[bi]
+            let storedHash = readHash(at: currentBucket)
 
             if storedHash == Self.empty {
                 // Found empty bucket - insert here or at first deleted
                 let insertBucket = firstDeleted ?? currentBucket
-                let insertBI = Int(bitPattern: insertBucket.position.rawValue)
-                _hashes[insertBI] = hash
-                _positions[insertBI] = Int(bitPattern: position.position.rawValue)
-                _count = Index<Element>.Count(Cardinal(_count.rawValue.rawValue + 1))
+                writeHash(at: insertBucket, value: hash)
+                writePosition(at: insertBucket, value: position)
+                _count = _count + .one
                 if firstDeleted == nil {
-                    _occupied = BucketIndex.Count(Cardinal(_occupied.rawValue.rawValue + 1))
+                    _occupied = _occupied + .one
                 }
                 return true
             }
@@ -63,13 +61,13 @@ extension Hash.Table.Static where Element: ~Copyable {
                 }
             } else if storedHash == hash {
                 // Hash match - check for duplicate
-                let existingPosition = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
+                let existingPosition = readPosition(at: currentBucket)
                 if equals(existingPosition) {
                     return false // Duplicate found
                 }
             }
 
-            currentBucket = nextBucket(currentBucket)
+            currentBucket = bucket(after: currentBucket)
         }
     }
 
@@ -95,23 +93,22 @@ extension Hash.Table.Static where Element: ~Copyable {
         }
 
         let hash = Self.normalize(hashValue)
-        var currentBucket = bucketFor(hash: hash)
+        var currentBucket = bucket(for: hash)
 
         while true {
-            let bi = Int(bitPattern: currentBucket.position.rawValue)
-            let storedHash = _hashes[bi]
+            let storedHash = readHash(at: currentBucket)
 
             if storedHash == Self.empty || storedHash == Self.deleted {
-                _hashes[bi] = hash
-                _positions[bi] = Int(bitPattern: position.position.rawValue)
-                _count = Index<Element>.Count(Cardinal(_count.rawValue.rawValue + 1))
+                writeHash(at: currentBucket, value: hash)
+                writePosition(at: currentBucket, value: position)
+                _count = _count + .one
                 if storedHash == Self.empty {
-                    _occupied = BucketIndex.Count(Cardinal(_occupied.rawValue.rawValue + 1))
+                    _occupied = _occupied + .one
                 }
                 return true
             }
 
-            currentBucket = nextBucket(currentBucket)
+            currentBucket = bucket(after: currentBucket)
         }
     }
 }

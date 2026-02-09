@@ -20,7 +20,7 @@ extension Hash.Table.Static where Element: ~Copyable {
 
     /// The number of occupied buckets (including deleted tombstones).
     @inlinable
-    public var occupied: BucketIndex.Count { _occupied }
+    public var occupancy: BucketIndex.Count { _occupied }
 
     /// The bucket capacity (compile-time constant).
     @inlinable

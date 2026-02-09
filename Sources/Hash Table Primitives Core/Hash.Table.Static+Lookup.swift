@@ -28,25 +28,24 @@ extension Hash.Table.Static where Element: ~Copyable {
         equals: (Index<Element>) -> Bool
     ) -> Index<Element>? {
         let hash = Self.normalize(hashValue)
-        var bucket = bucketFor(hash: hash)
+        var currentBucket = bucket(for: hash)
 
         while true {
-            let bi = Int(bitPattern: bucket.position.rawValue)
-            let storedHash = _hashes[bi]
+            let storedHash = readHash(at: currentBucket)
 
             if storedHash == Self.empty {
                 return nil
             }
 
             if storedHash == hash {
-                let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
+                let position = readPosition(at: currentBucket)
                 if equals(position) {
                     return position
                 }
             }
 
             // Skip deleted buckets but continue probing
-            bucket = nextBucket(bucket)
+            currentBucket = bucket(after: currentBucket)
         }
     }
 
@@ -63,24 +62,23 @@ extension Hash.Table.Static where Element: ~Copyable {
         equals: (Index<Element>) -> Bool
     ) -> BucketIndex? {
         let hash = Self.normalize(hashValue)
-        var bucket = bucketFor(hash: hash)
+        var currentBucket = bucket(for: hash)
 
         while true {
-            let bi = Int(bitPattern: bucket.position.rawValue)
-            let storedHash = _hashes[bi]
+            let storedHash = readHash(at: currentBucket)
 
             if storedHash == Self.empty {
                 return nil
             }
 
             if storedHash == hash {
-                let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[bi])))
+                let position = readPosition(at: currentBucket)
                 if equals(position) {
-                    return bucket
+                    return currentBucket
                 }
             }
 
-            bucket = nextBucket(bucket)
+            currentBucket = bucket(after: currentBucket)
         }
     }
 

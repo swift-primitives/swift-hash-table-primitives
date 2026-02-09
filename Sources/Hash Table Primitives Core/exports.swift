@@ -12,3 +12,4 @@
 @_exported public import Hash_Primitives
 @_exported public import Index_Primitives
 @_exported public import Cyclic_Index_Primitives
+@_exported public import Buffer_Slots_Primitives

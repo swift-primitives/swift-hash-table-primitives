@@ -15,26 +15,26 @@ extension Hash.Table where Element: ~Copyable {
     /// The number of elements in the hash table.
     @inlinable
     public var count: Index<Element>.Count {
-        _storage.header.count
+        _count
     }
 
     /// Whether the hash table is empty.
     @inlinable
     public var isEmpty: Bool {
-        _storage.header.count == .zero
+        _count == .zero
     }
 
     /// The current bucket capacity of the hash table.
     @inlinable
     public var capacity: Index<Bucket>.Count {
-        _storage.header.capacity
+        bucketCapacity
     }
 
     /// Whether the hash table should grow.
     @inlinable
     var shouldGrow: Bool {
-        let hashCapacity = Int(_storage.header.capacity.rawValue.rawValue)
-        let occupied = Int(_storage.header.occupied.rawValue.rawValue)
+        let hashCapacity = Int(bitPattern: bucketCapacity)
+        let occupied = Int(bitPattern: _occupied)
         // Grow when occupied exceeds 70% of capacity
         return occupied * 10 >= hashCapacity * 7
     }

@@ -11,28 +11,43 @@
 
 public import Hash_Table_Primitives_Core
 public import Ordinal_Primitives
+public import Property_Primitives
 
 extension Hash.Table where Element: ~Copyable {
-    /// Updates positions after an element is removed from external storage.
+    /// Access position update operations.
+    @inlinable
+    public var positions: Property<Positions, Self>.View.Typed<Element> {
+        mutating _read {
+            yield unsafe Property<Positions, Self>.View.Typed(&self)
+        }
+        mutating _modify {
+            var view = unsafe Property<Positions, Self>.View.Typed<Element>(&self)
+            yield &view
+        }
+    }
+}
+
+extension Property.View.Typed
+where Tag == Hash.Table<Element>.Positions, Base == Hash.Table<Element>, Element: ~Copyable {
+    /// Decrements all positions greater than `removedPosition`.
     ///
     /// When an element at `removedPosition` is removed from external storage,
     /// all positions greater than `removedPosition` must be decremented.
     ///
     /// - Parameter removedPosition: The typed position that was removed.
+    @_lifetime(&self)
     @inlinable
-    public mutating func decrementPositions(after removedPosition: Index<Element>) {
-        let removedRaw = Int(bitPattern: removedPosition.position.rawValue)
-        let cap = Int(_storage.header.capacity.rawValue.rawValue)
-
+    public mutating func decrement(after removedPosition: Index<Element>) {
+        let cap = Int(bitPattern: unsafe base.pointee.bucketCapacity)
         for i in 0..<cap {
-            let bucketIdx = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
-            let hash = _storage.readHash(at: bucketIdx)
-            if hash != Self.empty && hash != Self.deleted {
-                let pos = _storage.readPosition(at: bucketIdx)
-                let posRaw = Int(bitPattern: pos.position.rawValue)
-                if posRaw > removedRaw {
-                    let newPos = Index<Element>(__unchecked: (), Ordinal(UInt(posRaw - 1)))
-                    _storage.writePosition(at: bucketIdx, value: newPos)
+            let bucketIdx = Hash.Table<Element>.BucketIndex(
+                __unchecked: (), Ordinal(UInt(i))
+            )
+            let hash = unsafe base.pointee[hash: bucketIdx]
+            if hash != Hash.Table<Element>.empty && hash != Hash.Table<Element>.deleted {
+                let pos = unsafe base.pointee[position: bucketIdx]
+                if pos > removedPosition {
+                    unsafe base.pointee[position: bucketIdx] = try! pos.predecessor.exact()
                 }
             }
         }

@@ -25,27 +25,27 @@ extension Hash.Table where Element: ~Copyable {
         equals: (Index<Element>) -> Bool
     ) -> Index<Element>? {
         let hash = Self.normalize(hashValue)
-        let capacity = _storage.header.capacity
+        let capacity = bucketCapacity
         var currentBucket = BucketIndex(
             __unchecked: (),
             Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
         )
 
         while true {
-            let storedHash = _storage.readHash(at: currentBucket)
+            let storedHash = self[hash: currentBucket]
 
             if storedHash == Self.empty {
                 return nil
             }
 
             if storedHash == hash {
-                let position = _storage.readPosition(at: currentBucket)
+                let position = self[position: currentBucket]
                 if equals(position) {
                     return position
                 }
             }
 
-            currentBucket = Modular.successor(of: currentBucket, capacity: capacity)
+            currentBucket = BucketIndex.Modular.successor(of: currentBucket, capacity: capacity)
         }
     }
 
@@ -62,27 +62,27 @@ extension Hash.Table where Element: ~Copyable {
         equals: (Index<Element>) -> Bool
     ) -> BucketIndex? {
         let hash = Self.normalize(hashValue)
-        let capacity = _storage.header.capacity
+        let capacity = bucketCapacity
         var currentBucket = BucketIndex(
             __unchecked: (),
             Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
         )
 
         while true {
-            let storedHash = _storage.readHash(at: currentBucket)
+            let storedHash = self[hash: currentBucket]
 
             if storedHash == Self.empty {
                 return nil
             }
 
             if storedHash == hash {
-                let position = _storage.readPosition(at: currentBucket)
+                let position = self[position: currentBucket]
                 if equals(position) {
                     return currentBucket
                 }
             }
 
-            currentBucket = Modular.successor(of: currentBucket, capacity: capacity)
+            currentBucket = BucketIndex.Modular.successor(of: currentBucket, capacity: capacity)
         }
     }
 }

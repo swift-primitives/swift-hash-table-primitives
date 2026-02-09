@@ -10,55 +10,24 @@
 // ===----------------------------------------------------------------------===//
 
 extension Hash.Table.Static where Element: ~Copyable {
-    /// Updates positions after an element is removed from external storage.
-    ///
-    /// When an element at `removedPosition` is removed from external storage
-    /// (e.g., an array), and remaining elements shift left to fill the gap,
-    /// all positions in the hash table greater than `removedPosition` must
-    /// be decremented to maintain correct references.
-    ///
-    /// ## Usage
-    ///
-    /// ```swift
-    /// // Remove element at position 2 from array
-    /// let value = array.remove(at: 2)
-    /// // Array elements at positions 3, 4, 5... shift to 2, 3, 4...
-    /// // Update hash table to reflect the shift
-    /// hashTable.decrementPositions(after: Index(2))
-    /// ```
-    ///
-    /// - Parameter removedPosition: The typed position that was removed.
-    ///
-    /// - Complexity: O(n) where n is bucket capacity.
+    /// Decrements all positions greater than `removedPosition` (internal helper for Property accessor).
     @inlinable
-    public mutating func decrementPositions(after removedPosition: Index<Element>) {
-        let removedRaw = Int(bitPattern: removedPosition.position.rawValue)
-
-        for i in 0..<bucketCapacity {
-            let hash = _hashes[i]
+    package mutating func decrementAllPositions(after removedPosition: Index<Element>) {
+        Self.forEachBucketIndex { bucketIdx in
+            let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
-                let posRaw = _positions[i]
-                if posRaw > removedRaw {
-                    _positions[i] = posRaw - 1
+                let pos = readPosition(at: bucketIdx)
+                if pos > removedPosition {
+                    writePosition(at: bucketIdx, value: try! pos.predecessor.exact())
                 }
             }
         }
     }
 
-    /// Updates the position for an element with the given hash value.
-    ///
-    /// Use this when an element's position in external storage changes
-    /// without being removed (e.g., during a swap operation).
-    ///
-    /// - Parameters:
-    ///   - hashValue: The hash value of the element to update.
-    ///   - equals: A closure that checks if the element at a given position
-    ///     matches the element to update.
-    ///   - newPosition: The new position for the element.
-    /// - Returns: `true` if the position was updated, `false` if element not found.
+    /// Updates position for an element with the given hash value (internal helper for Property accessor).
     @inlinable
     @discardableResult
-    public mutating func updatePosition(
+    package mutating func updatePositionInternal(
         forHash hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool,
         newPosition: Index<Element>
@@ -66,24 +35,17 @@ extension Hash.Table.Static where Element: ~Copyable {
         guard let bucket = bucketIndex(forHash: hashValue, equals: equals) else {
             return false
         }
-        _positions[Int(bitPattern: bucket.position.rawValue)] = Int(bitPattern: newPosition.position.rawValue)
+        writePosition(at: bucket, value: newPosition)
         return true
     }
 
-    /// Updates the position at a specific bucket index.
-    ///
-    /// - Parameters:
-    ///   - bucket: The bucket index to update.
-    ///   - newPosition: The new position value.
-    ///
-    /// - Precondition: The bucket must contain a valid element.
+    /// Updates position at a specific bucket index (internal helper for Property accessor).
     @inlinable
-    public mutating func updatePosition(atBucket bucket: BucketIndex, newPosition: Index<Element>) {
-        let bi = Int(bitPattern: bucket.position.rawValue)
+    package mutating func updatePositionInternal(atBucket bucket: BucketIndex, newPosition: Index<Element>) {
         precondition(
-            _hashes[bi] != Self.empty && _hashes[bi] != Self.deleted,
+            readHash(at: bucket) != Self.empty && readHash(at: bucket) != Self.deleted,
             "Cannot update position of empty or deleted bucket"
         )
-        _positions[bi] = Int(bitPattern: newPosition.position.rawValue)
+        writePosition(at: bucket, value: newPosition)
     }
 }

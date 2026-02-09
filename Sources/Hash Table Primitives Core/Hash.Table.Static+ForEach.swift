@@ -17,15 +17,14 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///
     /// - Complexity: O(n) where n is bucket capacity.
     @inlinable
-    public borrowing func forEachOccupied(
-        _ body: (_ bucket: BucketIndex, _ hash: Int, _ position: Index<Element>) -> Void
+    package borrowing func eachOccupied(
+        _ body: (_ bucket: BucketIndex, _ position: Index<Element>) -> Void
     ) {
-        for i in 0..<bucketCapacity {
-            let hash = _hashes[i]
+        Self.forEachBucketIndex { bucketIdx in
+            let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
-                let bucket = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
-                let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[i])))
-                body(bucket, hash, position)
+                let position = readPosition(at: bucketIdx)
+                body(bucketIdx, position)
             }
         }
     }
@@ -38,11 +37,11 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///
     /// - Complexity: O(n) where n is bucket capacity.
     @inlinable
-    public borrowing func forEachPosition(_ body: (Index<Element>) -> Void) {
-        for i in 0..<bucketCapacity {
-            let hash = _hashes[i]
+    package borrowing func eachPosition(_ body: (Index<Element>) -> Void) {
+        Self.forEachBucketIndex { bucketIdx in
+            let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
-                let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[i])))
+                let position = readPosition(at: bucketIdx)
                 body(position)
             }
         }
@@ -57,15 +56,16 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Complexity: O(n) where n is bucket capacity.
     @inlinable
     @discardableResult
-    public borrowing func forEachOccupiedWhile(
+    package borrowing func eachOccupiedWhile(
         _ body: (_ bucket: BucketIndex, _ hash: Int, _ position: Index<Element>) -> Bool
     ) -> Bool {
+        // Manual loop required for early exit support
         for i in 0..<bucketCapacity {
-            let hash = _hashes[i]
+            let bucketIdx = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
+            let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
-                let bucket = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
-                let position = Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[i])))
-                if !body(bucket, hash, position) {
+                let position = readPosition(at: bucketIdx)
+                if !body(bucketIdx, hash, position) {
                     return false
                 }
             }

@@ -37,19 +37,15 @@ extension Hash.Table where Element: ~Copyable {
         var firstDeleted: BucketIndex? = nil
 
         while true {
-            let storedHash = _storage.readHash(at: currentBucket)
+            let storedHash = self[hash: currentBucket]
 
             if storedHash == Self.empty {
                 let insertBucket = firstDeleted ?? currentBucket
-                _storage.writeHash(at: insertBucket, value: hash)
-                _storage.writePosition(at: insertBucket, value: position)
-                _storage.header.count = Index<Element>.Count(
-                    Cardinal(_storage.header.count.rawValue.rawValue + 1)
-                )
+                self[hash: insertBucket] = hash
+                self[position: insertBucket] = position
+                _count = _count + .one
                 if firstDeleted == nil {
-                    _storage.header.occupied = Index<Bucket>.Count(
-                        Cardinal(_storage.header.occupied.rawValue.rawValue + 1)
-                    )
+                    _occupied = _occupied + .one
                 }
                 return true
             }
@@ -59,7 +55,7 @@ extension Hash.Table where Element: ~Copyable {
                     firstDeleted = currentBucket
                 }
             } else if storedHash == hash {
-                let existingPosition = _storage.readPosition(at: currentBucket)
+                let existingPosition = self[position: currentBucket]
                 if equals(existingPosition) {
                     return false // Duplicate
                 }
@@ -88,18 +84,14 @@ extension Hash.Table where Element: ~Copyable {
         var currentBucket = bucket.for(hash: hash)
 
         while true {
-            let storedHash = _storage.readHash(at: currentBucket)
+            let storedHash = self[hash: currentBucket]
 
             if storedHash == Self.empty || storedHash == Self.deleted {
-                _storage.writeHash(at: currentBucket, value: hash)
-                _storage.writePosition(at: currentBucket, value: position)
-                _storage.header.count = Index<Element>.Count(
-                    Cardinal(_storage.header.count.rawValue.rawValue + 1)
-                )
+                self[hash: currentBucket] = hash
+                self[position: currentBucket] = position
+                _count = _count + .one
                 if storedHash == Self.empty {
-                    _storage.header.occupied = Index<Bucket>.Count(
-                        Cardinal(_storage.header.occupied.rawValue.rawValue + 1)
-                    )
+                    _occupied = _occupied + .one
                 }
                 return
             }
@@ -111,33 +103,36 @@ extension Hash.Table where Element: ~Copyable {
     /// Doubles the capacity and rehashes all elements.
     @inlinable
     mutating func grow() {
-        let oldCapacity = _storage.header.capacity
-        let oldCapInt = Int(oldCapacity.rawValue.rawValue)
-        let newCapacity = Index<Bucket>.Count(Cardinal(UInt(max(8, oldCapInt * 2))))
-        let newStorage = Storage.create(capacity: newCapacity)
+        let oldCapacity = bucketCapacity
+        let newCapacity = Index<Bucket>.Count(Cardinal(UInt(max(8, Int(bitPattern: oldCapacity) * 2))))
+        var newBuffer = Buffer<Int>.Slots<Int>(
+            capacity: newCapacity.retag(Int.self),
+            metadataInitial: Self.empty
+        )
+        newBuffer.fill(payload: 0)
 
-        for i in 0..<oldCapInt {
+        let cap = Int(bitPattern: oldCapacity)
+        for i in 0..<cap {
             let bucketIdx = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
-            let hash = _storage.readHash(at: bucketIdx)
+            let hash = self[hash: bucketIdx]
             if hash != Self.empty && hash != Self.deleted {
-                let position = _storage.readPosition(at: bucketIdx)
+                let position = self[position: bucketIdx]
                 var targetBucket = BucketIndex(
                     __unchecked: (),
                     Ordinal(UInt(bitPattern: hash)) % newCapacity.rawValue
                 )
 
-                while newStorage.readHash(at: targetBucket) != Self.empty {
-                    targetBucket = Modular.successor(of: targetBucket, capacity: newCapacity)
+                while newBuffer[metadata: targetBucket.retag(Int.self)] != Self.empty {
+                    targetBucket = BucketIndex.Modular.successor(of: targetBucket, capacity: newCapacity)
                 }
 
-                newStorage.writeHash(at: targetBucket, value: hash)
-                newStorage.writePosition(at: targetBucket, value: position)
+                newBuffer[metadata: targetBucket.retag(Int.self)] = hash
+                newBuffer[payload: targetBucket.retag(Int.self)] = Int(bitPattern: position.position.rawValue)
             }
         }
 
-        newStorage.header.count = _storage.header.count
         // After rehashing, occupied = count (no deleted buckets)
-        newStorage.header.occupied = Index<Bucket>.Count(_storage.header.count.rawValue)
-        _storage = newStorage
+        _occupied = Index<Bucket>.Count(_count.rawValue)
+        _buffer = newBuffer
     }
 }

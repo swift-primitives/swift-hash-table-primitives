@@ -32,6 +32,8 @@ let package = Package(
         .package(path: "../swift-ordinal-primitives"),
         .package(path: "../swift-cardinal-primitives"),
         .package(path: "../swift-cyclic-index-primitives"),
+        .package(path: "../swift-sequence-primitives"),
+        .package(path: "../swift-buffer-primitives"),
     ],
     targets: [
         // Layer 1: Core type definitions (no constraint poisoning)
@@ -43,6 +45,7 @@ let package = Package(
                 .product(name: "Ordinal Primitives", package: "swift-ordinal-primitives"),
                 .product(name: "Cardinal Primitives", package: "swift-cardinal-primitives"),
                 .product(name: "Cyclic Index Primitives", package: "swift-cyclic-index-primitives"),
+                .product(name: "Buffer Slots Primitives", package: "swift-buffer-primitives"),
             ]
         ),
         // Layer 2: Full API + re-export
@@ -51,6 +54,7 @@ let package = Package(
             dependencies: [
                 "Hash Table Primitives Core",
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
+                .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
             ]
         ),
         // Test Support: test helpers and re-exports
