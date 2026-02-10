@@ -23,10 +23,10 @@ extension Hash.Occupied where Source: Copyable {
         let _positions: InlineArray<bucketCapacity, Int>
 
         @usableFromInline
-        package let _count: Int
+        package let _count: Index<Source>.Count
 
         @inlinable
-        package init(hashes: InlineArray<bucketCapacity, Int>, positions: InlineArray<bucketCapacity, Int>, count: Int) {
+        package init(hashes: InlineArray<bucketCapacity, Int>, positions: InlineArray<bucketCapacity, Int>, count: Index<Source>.Count) {
             self._hashes = hashes
             self._positions = positions
             self._count = count

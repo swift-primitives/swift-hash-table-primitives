@@ -21,5 +21,5 @@ extension Hash.Occupied.Static: Swift.Sequence {
     /// Disambiguates `underestimatedCount` between the default provided by
     /// `Sequence.Protocol where Self: Copyable` and `Swift.Sequence`.
     @inlinable
-    public var underestimatedCount: Int { _count }
+    public var underestimatedCount: Int { Int(bitPattern: _count) }
 }

@@ -11,6 +11,7 @@
 
 public import Hash_Primitives
 public import Index_Primitives
+public import Ordinal_Primitives
 public import Cardinal_Primitives
 public import Cyclic_Index_Primitives
 public import Finite_Primitives
@@ -266,8 +267,11 @@ extension Hash {
             /// Iterates over all bucket indices.
             @inlinable
             static func forEachBucketIndex(_ body: (BucketIndex) -> Void) {
-                for i in 0..<bucketCapacity {
-                    body(BucketIndex(__unchecked: (), Ordinal(UInt(i))))
+                var bucket: BucketIndex = .zero
+                let cap = BucketIndex.Count(Cardinal(UInt(bucketCapacity)))
+                while bucket < cap {
+                    body(bucket)
+                    bucket += .one
                 }
             }
 

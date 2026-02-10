@@ -23,27 +23,28 @@ extension Hash.Occupied.Static {
         let _positions: InlineArray<bucketCapacity, Int>
 
         @usableFromInline
-        var _index: Int
+        let _capacity: Hash.Table<Source>.BucketIndex.Count
+
+        @usableFromInline
+        var _index: Hash.Table<Source>.BucketIndex
 
         @inlinable
         package init(hashes: InlineArray<bucketCapacity, Int>, positions: InlineArray<bucketCapacity, Int>) {
             self._hashes = hashes
             self._positions = positions
-            self._index = 0
+            self._capacity = Hash.Table<Source>.BucketIndex.Count(Cardinal(UInt(bucketCapacity)))
+            self._index = .zero
         }
 
         @inlinable
         public mutating func next() -> Hash.Occupied<Source>? {
-            while _index < bucketCapacity {
-                let i = _index
-                _index &+= 1
-                let hash = _hashes[i]
+            while _index < _capacity {
+                let bucket = _index
+                _index += .one
+                let hash = _hashes[position: bucket]
                 if hash != Hash.Table<Source>.empty && hash != Hash.Table<Source>.deleted {
-                    let bucket = Hash.Table<Source>.BucketIndex(
-                        __unchecked: (), Ordinal(UInt(i))
-                    )
                     let position = Index<Source>(
-                        __unchecked: (), Ordinal(UInt(bitPattern: _positions[i]))
+                        __unchecked: (), Ordinal(UInt(bitPattern: _positions[position: bucket]))
                     )
                     return Hash.Occupied(bucket: bucket, hash: hash, position: position)
                 }

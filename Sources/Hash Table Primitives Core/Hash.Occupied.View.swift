@@ -23,13 +23,13 @@ extension Hash.Occupied where Source: Copyable {
         let _positions: UnsafePointer<Int>
 
         @usableFromInline
-        let _capacity: Int
+        let _capacity: Hash.Table<Source>.BucketIndex.Count
 
         @usableFromInline
-        package let _count: Int
+        package let _count: Index<Source>.Count
 
         @inlinable
-        package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Int, count: Int) {
+        package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Hash.Table<Source>.BucketIndex.Count, count: Index<Source>.Count) {
             unsafe self._hashes = hashes
             unsafe self._positions = positions
             self._capacity = capacity

@@ -33,16 +33,15 @@ where Tag == Hash.Table<Element>.ForEach, Base == Hash.Table<Element>, Element: 
     /// - Parameter body: A closure called with each occupied bucket's index and stored position.
     @inlinable
     public func occupied(_ body: (Hash.Table<Element>.BucketIndex, Index<Element>) -> Void) {
-        let cap = Int(bitPattern: unsafe base.pointee.bucketCapacity)
-        for i in 0..<cap {
-            let bucketIdx = Hash.Table<Element>.BucketIndex(
-                __unchecked: (), Ordinal(UInt(i))
-            )
-            let hash = unsafe base.pointee[hash: bucketIdx]
+        var bucket: Hash.Table<Element>.BucketIndex = .zero
+        let cap = unsafe base.pointee.bucketCapacity
+        while bucket < cap {
+            let hash = unsafe base.pointee[hash: bucket]
             if hash != Hash.Table<Element>.empty && hash != Hash.Table<Element>.deleted {
-                let position = unsafe base.pointee[position: bucketIdx]
-                body(bucketIdx, position)
+                let position = unsafe base.pointee[position: bucket]
+                body(bucket, position)
             }
+            bucket += .one
         }
     }
 }

@@ -95,8 +95,10 @@ extension Hash.Table.Static where Element: ~Copyable {
         // Reinsert all entries
         for entry in entries {
             var targetBucket = bucket(for: entry.hash)
-            while readHash(at: targetBucket) != Self.empty {
+            var probes = 0
+            while readHash(at: targetBucket) != Self.empty && probes < bucketCapacity {
                 targetBucket = bucket(after: targetBucket)
+                probes += 1
             }
             writeHash(at: targetBucket, value: entry.hash)
             writePosition(at: targetBucket, value: entry.position)

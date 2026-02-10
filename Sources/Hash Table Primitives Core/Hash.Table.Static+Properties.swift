@@ -36,7 +36,8 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     public var shouldGrow: Bool {
         // Grow when occupied exceeds 70% of capacity
-        Int(bitPattern: _occupied) * 10 >= bucketCapacity * 7
+        typealias Scale = Affine.Discrete.Ratio<Bucket, Bucket>
+        return _occupied * Scale(10) >= capacity * Scale(7)
     }
 
     /// Whether the hash table is completely full.
@@ -44,6 +45,6 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// When `true`, no more elements can be inserted.
     @inlinable
     public var isFull: Bool {
-        Int(bitPattern: _occupied) >= bucketCapacity
+        _occupied >= capacity
     }
 }

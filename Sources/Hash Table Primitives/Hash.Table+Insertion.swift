@@ -127,28 +127,30 @@ extension Hash.Table where Element: ~Copyable {
         )
         newBuffer.fill(payload: 0)
 
-        let cap = Int(bitPattern: oldCapacity)
-        for i in 0..<cap {
-            let bucketIdx = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
-            let hash = self[hash: bucketIdx]
+        var bucket: BucketIndex = .zero
+        while bucket < oldCapacity {
+            let hash = self[hash: bucket]
             if hash != Self.empty && hash != Self.deleted {
-                let position = self[position: bucketIdx]
+                let position = self[position: bucket]
                 var targetBucket = BucketIndex(
                     __unchecked: (),
                     Ordinal(UInt(bitPattern: hash)) % newCapacity.rawValue
                 )
 
-                while newBuffer[metadata: targetBucket.retag(Int.self)] != Self.empty {
+                var probes: Index<Bucket>.Count = .zero
+                while newBuffer[metadata: targetBucket.retag(Int.self)] != Self.empty && probes < newCapacity {
                     targetBucket = BucketIndex.Modular.successor(of: targetBucket, capacity: newCapacity)
+                    probes += .one
                 }
 
                 newBuffer[metadata: targetBucket.retag(Int.self)] = hash
                 newBuffer[payload: targetBucket.retag(Int.self)] = Int(bitPattern: position.position.rawValue)
             }
+            bucket += .one
         }
 
         // After rehashing, occupied = count (no deleted buckets)
-        _occupied = Index<Bucket>.Count(_count.rawValue)
+        _occupied = _count.retag(Bucket.self)
         _buffer = newBuffer
     }
 }

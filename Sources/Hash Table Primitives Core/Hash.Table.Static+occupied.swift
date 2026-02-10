@@ -25,7 +25,7 @@ extension Hash.Table.Static where Element: Copyable {
     public var occupied: Hash.Occupied<Element>.Static<bucketCapacity> {
         Hash.Occupied<Element>.Static(
             hashes: _hashes, positions: _positions,
-            count: Int(bitPattern: _count)
+            count: _count
         )
     }
 }

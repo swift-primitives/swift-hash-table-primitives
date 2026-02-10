@@ -33,9 +33,8 @@ extension Hash.Table where Element: ~Copyable {
     /// Whether the hash table should grow.
     @inlinable
     var shouldGrow: Bool {
-        let hashCapacity = Int(bitPattern: bucketCapacity)
-        let occupied = Int(bitPattern: _occupied)
         // Grow when occupied exceeds 70% of capacity
-        return occupied * 10 >= hashCapacity * 7
+        typealias Scale = Affine.Discrete.Ratio<Bucket, Bucket>
+        return _occupied * Scale(10) >= bucketCapacity * Scale(7)
     }
 }

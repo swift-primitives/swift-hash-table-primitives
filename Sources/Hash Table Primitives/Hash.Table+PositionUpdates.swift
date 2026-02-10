@@ -38,18 +38,17 @@ where Tag == Hash.Table<Element>.Positions, Base == Hash.Table<Element>, Element
     @_lifetime(&self)
     @inlinable
     public mutating func decrement(after removedPosition: Index<Element>) {
-        let cap = Int(bitPattern: unsafe base.pointee.bucketCapacity)
-        for i in 0..<cap {
-            let bucketIdx = Hash.Table<Element>.BucketIndex(
-                __unchecked: (), Ordinal(UInt(i))
-            )
-            let hash = unsafe base.pointee[hash: bucketIdx]
+        var bucket: Hash.Table<Element>.BucketIndex = .zero
+        let cap = unsafe base.pointee.bucketCapacity
+        while bucket < cap {
+            let hash = unsafe base.pointee[hash: bucket]
             if hash != Hash.Table<Element>.empty && hash != Hash.Table<Element>.deleted {
-                let pos = unsafe base.pointee[position: bucketIdx]
+                let pos = unsafe base.pointee[position: bucket]
                 if pos > removedPosition {
-                    unsafe base.pointee[position: bucketIdx] = try! pos.predecessor.exact()
+                    unsafe base.pointee[position: bucket] = try! pos.predecessor.exact()
                 }
             }
+            bucket += .one
         }
     }
 }

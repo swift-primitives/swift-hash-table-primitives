@@ -25,8 +25,8 @@ extension Hash.Table where Element: Copyable {
     public var occupied: Hash.Occupied<Element>.View {
         let hashes: UnsafePointer<Int> = unsafe _buffer.withMetadataPointer { unsafe UnsafePointer($0) }
         let positions: UnsafePointer<Int> = unsafe UnsafePointer(_buffer.pointer(at: .zero))
-        let capacity = Int(bitPattern: _buffer.capacity)
-        let count = Int(bitPattern: _count)
+        let capacity = _buffer.capacity.retag(Hash.Table<Element>.Bucket.self)
+        let count = _count
         return unsafe Hash.Occupied<Element>.View(
             hashes: hashes, positions: positions, capacity: capacity, count: count
         )

@@ -60,15 +60,17 @@ extension Hash.Table.Static where Element: ~Copyable {
         _ body: (_ bucket: BucketIndex, _ hash: Int, _ position: Index<Element>.Bounded<bucketCapacity>) -> Bool
     ) -> Bool {
         // Manual loop required for early exit support
-        for i in 0..<bucketCapacity {
-            let bucketIdx = BucketIndex(__unchecked: (), Ordinal(UInt(i)))
-            let hash = readHash(at: bucketIdx)
+        var bucket: BucketIndex = .zero
+        let cap = BucketIndex.Count(Cardinal(UInt(bucketCapacity)))
+        while bucket < cap {
+            let hash = readHash(at: bucket)
             if hash != Self.empty && hash != Self.deleted {
-                let position = readPosition(at: bucketIdx)
-                if !body(bucketIdx, hash, position) {
+                let position = readPosition(at: bucket)
+                if !body(bucket, hash, position) {
                     return false
                 }
             }
+            bucket += .one
         }
         return true
     }
