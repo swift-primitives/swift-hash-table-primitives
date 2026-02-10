@@ -24,31 +24,28 @@ extension Hash.Occupied.View {
         let _positions: UnsafePointer<Int>
 
         @usableFromInline
-        let _capacity: Int
+        let _capacity: Hash.Table<Source>.BucketIndex.Count
 
         @usableFromInline
-        var _index: Int
+        var _index: Hash.Table<Source>.BucketIndex
 
         @inlinable
-        package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Int) {
+        package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Hash.Table<Source>.BucketIndex.Count) {
             unsafe self._hashes = hashes
             unsafe self._positions = positions
             self._capacity = capacity
-            self._index = 0
+            self._index = .zero
         }
 
         @inlinable
         public mutating func next() -> Hash.Occupied<Source>? {
             while _index < _capacity {
-                let i = _index
-                _index &+= 1
-                let hash = unsafe _hashes[i]
+                let bucket = _index
+                _index += .one
+                let hash = unsafe _hashes[position: bucket]
                 if hash != Hash.Table<Source>.empty && hash != Hash.Table<Source>.deleted {
-                    let bucket = Hash.Table<Source>.BucketIndex(
-                        __unchecked: (), Ordinal(UInt(i))
-                    )
                     let position = Index<Source>(
-                        __unchecked: (), Ordinal(UInt(bitPattern: unsafe _positions[i]))
+                        __unchecked: (), Ordinal(UInt(bitPattern: unsafe _positions[position: bucket]))
                     )
                     return Hash.Occupied(bucket: bucket, hash: hash, position: position)
                 }
