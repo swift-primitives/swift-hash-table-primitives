@@ -38,8 +38,9 @@ extension Hash.Table.Static where Element: ~Copyable {
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket(for: hash)
         var firstDeleted: BucketIndex? = nil
+        var probes = 0
 
-        while true {
+        while probes < bucketCapacity {
             let storedHash = readHash(at: currentBucket)
 
             if storedHash == Self.empty {
@@ -68,7 +69,18 @@ extension Hash.Table.Static where Element: ~Copyable {
             }
 
             currentBucket = bucket(after: currentBucket)
+            probes += 1
         }
+
+        // All buckets probed — insert at first deleted if available
+        if let insertBucket = firstDeleted {
+            writeHash(at: insertBucket, value: hash)
+            writePosition(at: insertBucket, value: position)
+            _count = _count + .one
+            return true
+        }
+
+        return false
     }
 
     /// Inserts without checking for duplicates.
@@ -94,8 +106,9 @@ extension Hash.Table.Static where Element: ~Copyable {
 
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket(for: hash)
+        var probes = 0
 
-        while true {
+        while probes < bucketCapacity {
             let storedHash = readHash(at: currentBucket)
 
             if storedHash == Self.empty || storedHash == Self.deleted {
@@ -109,6 +122,9 @@ extension Hash.Table.Static where Element: ~Copyable {
             }
 
             currentBucket = bucket(after: currentBucket)
+            probes += 1
         }
+
+        return false
     }
 }

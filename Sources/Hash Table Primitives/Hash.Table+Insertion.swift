@@ -35,8 +35,10 @@ extension Hash.Table where Element: ~Copyable {
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket.for(hash: hash)
         var firstDeleted: BucketIndex? = nil
+        var probes: Index<Bucket>.Count = .zero
+        let cap = bucketCapacity
 
-        while true {
+        while probes < cap {
             let storedHash = self[hash: currentBucket]
 
             if storedHash == Self.empty {
@@ -62,7 +64,18 @@ extension Hash.Table where Element: ~Copyable {
             }
 
             currentBucket = bucket.next(currentBucket)
+            probes += .one
         }
+
+        // All buckets probed — insert at first deleted if available
+        if let insertBucket = firstDeleted {
+            self[hash: insertBucket] = hash
+            self[position: insertBucket] = position
+            _count = _count + .one
+            return true
+        }
+
+        return false
     }
 
     /// Inserts without checking for duplicates.
@@ -82,8 +95,10 @@ extension Hash.Table where Element: ~Copyable {
 
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket.for(hash: hash)
+        var probes: Index<Bucket>.Count = .zero
+        let cap = bucketCapacity
 
-        while true {
+        while probes < cap {
             let storedHash = self[hash: currentBucket]
 
             if storedHash == Self.empty || storedHash == Self.deleted {
@@ -97,6 +112,7 @@ extension Hash.Table where Element: ~Copyable {
             }
 
             currentBucket = bucket.next(currentBucket)
+            probes += .one
         }
     }
 

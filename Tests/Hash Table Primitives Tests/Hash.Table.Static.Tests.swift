@@ -274,6 +274,69 @@ struct HashTableInlineTests {
         #expect(table.count == expectedCount)
     }
 
+    @Test("Lookup terminates at full capacity")
+    func lookupTerminatesAtFullCapacity() {
+        var table = Hash.Table<InlineTestElement>.Static<2>()
+
+        let position0: Index<InlineTestElement>.Bounded<2> = 0
+        let position1: Index<InlineTestElement>.Bounded<2> = 1
+
+        table.insert(position: position0, hashValue: 42, equals: { _ in false })
+        table.insert(position: position1, hashValue: 43, equals: { _ in false })
+
+        #expect(table.isFull == true)
+
+        // Lookup a non-existent key at full capacity — must return nil, not hang
+        let notFound = table.position(forHash: 99, equals: { _ in false })
+        #expect(notFound == nil)
+
+        // bucketIndex must also terminate
+        let noBucket = table.bucketIndex(forHash: 99, equals: { _ in false })
+        #expect(noBucket == nil)
+
+        // contains must also terminate
+        #expect(table.contains(hashValue: 99, equals: { _ in false }) == false)
+    }
+
+    @Test("Lookup terminates with hash collision at full capacity")
+    func lookupTerminatesWithCollisionAtFullCapacity() {
+        var table = Hash.Table<InlineTestElement>.Static<2>()
+
+        let position0: Index<InlineTestElement>.Bounded<2> = 0
+        let position1: Index<InlineTestElement>.Bounded<2> = 1
+
+        // Same hash, different positions
+        table.insert(position: position0, hashValue: 42, equals: { _ in false })
+        table.insert(position: position1, hashValue: 42, equals: { _ in false })
+
+        #expect(table.isFull == true)
+
+        // All buckets have hash 42 but no position matches — must terminate
+        let notFound = table.position(forHash: 42, equals: { _ in false })
+        #expect(notFound == nil)
+    }
+
+    @Test("Insert returns false at full capacity")
+    func insertReturnsFalseAtFullCapacity() {
+        var table = Hash.Table<InlineTestElement>.Static<2>()
+
+        let position0: Index<InlineTestElement>.Bounded<2> = 0
+        let position1: Index<InlineTestElement>.Bounded<2> = 1
+
+        table.insert(position: position0, hashValue: 42, equals: { _ in false })
+        table.insert(position: position1, hashValue: 43, equals: { _ in false })
+
+        #expect(table.isFull == true)
+
+        // Insert at full capacity must return false
+        let result = table.insert(position: position0, hashValue: 99, equals: { _ in false })
+        #expect(result == false)
+
+        // Unchecked insert must also return false
+        let uncheckedResult = table.insert(__unchecked: (), position: position0, hashValue: 99)
+        #expect(uncheckedResult == false)
+    }
+
     @Test("Copyable when Element is Copyable")
     func copyableWhenElementCopyable() throws {
         var table = Hash.Table<Int>.Static<16>()

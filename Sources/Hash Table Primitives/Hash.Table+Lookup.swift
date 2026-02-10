@@ -30,8 +30,9 @@ extension Hash.Table where Element: ~Copyable {
             __unchecked: (),
             Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
         )
+        var probes: Index<Bucket>.Count = .zero
 
-        while true {
+        while probes < capacity {
             let storedHash = self[hash: currentBucket]
 
             if storedHash == Self.empty {
@@ -46,7 +47,10 @@ extension Hash.Table where Element: ~Copyable {
             }
 
             currentBucket = BucketIndex.Modular.successor(of: currentBucket, capacity: capacity)
+            probes += .one
         }
+
+        return nil
     }
 
     /// Finds the bucket index for an element with the given hash value.
@@ -67,8 +71,9 @@ extension Hash.Table where Element: ~Copyable {
             __unchecked: (),
             Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
         )
+        var probes: Index<Bucket>.Count = .zero
 
-        while true {
+        while probes < capacity {
             let storedHash = self[hash: currentBucket]
 
             if storedHash == Self.empty {
@@ -83,6 +88,9 @@ extension Hash.Table where Element: ~Copyable {
             }
 
             currentBucket = BucketIndex.Modular.successor(of: currentBucket, capacity: capacity)
+            probes += .one
         }
+
+        return nil
     }
 }

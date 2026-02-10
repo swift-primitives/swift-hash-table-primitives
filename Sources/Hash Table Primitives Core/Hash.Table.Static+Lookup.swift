@@ -29,8 +29,9 @@ extension Hash.Table.Static where Element: ~Copyable {
     ) -> Index<Element>.Bounded<bucketCapacity>? {
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket(for: hash)
+        var probes = 0
 
-        while true {
+        while probes < bucketCapacity {
             let storedHash = readHash(at: currentBucket)
 
             if storedHash == Self.empty {
@@ -44,9 +45,11 @@ extension Hash.Table.Static where Element: ~Copyable {
                 }
             }
 
-            // Skip deleted buckets but continue probing
             currentBucket = bucket(after: currentBucket)
+            probes += 1
         }
+
+        return nil
     }
 
     /// Finds the bucket index for an element with the given hash value.
@@ -63,8 +66,9 @@ extension Hash.Table.Static where Element: ~Copyable {
     ) -> BucketIndex? {
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket(for: hash)
+        var probes = 0
 
-        while true {
+        while probes < bucketCapacity {
             let storedHash = readHash(at: currentBucket)
 
             if storedHash == Self.empty {
@@ -79,7 +83,10 @@ extension Hash.Table.Static where Element: ~Copyable {
             }
 
             currentBucket = bucket(after: currentBucket)
+            probes += 1
         }
+
+        return nil
     }
 
     /// Checks whether an element with the given hash value exists.
