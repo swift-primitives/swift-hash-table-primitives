@@ -32,6 +32,7 @@ let package = Package(
         .package(path: "../swift-ordinal-primitives"),
         .package(path: "../swift-cardinal-primitives"),
         .package(path: "../swift-cyclic-index-primitives"),
+        .package(path: "../swift-finite-primitives"),
         .package(path: "../swift-sequence-primitives"),
         .package(path: "../swift-buffer-primitives"),
     ],
@@ -45,6 +46,7 @@ let package = Package(
                 .product(name: "Ordinal Primitives", package: "swift-ordinal-primitives"),
                 .product(name: "Cardinal Primitives", package: "swift-cardinal-primitives"),
                 .product(name: "Cyclic Index Primitives", package: "swift-cyclic-index-primitives"),
+                .product(name: "Finite Primitives", package: "swift-finite-primitives"),
                 .product(name: "Buffer Slots Primitives", package: "swift-buffer-primitives"),
             ]
         ),

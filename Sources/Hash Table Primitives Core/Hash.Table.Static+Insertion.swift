@@ -10,13 +10,13 @@
 // ===----------------------------------------------------------------------===//
 
 extension Hash.Table.Static where Element: ~Copyable {
-    /// Inserts an element's position into the hash table.
+    /// Inserts an element's bounded position into the hash table.
     ///
     /// Uses linear probing to find an empty or deleted bucket. Reuses
     /// deleted buckets (tombstones) when possible.
     ///
     /// - Parameters:
-    ///   - position: The typed position in external storage.
+    ///   - position: The bounded position in external storage.
     ///   - hashValue: The hash value of the element.
     ///   - equals: A closure that checks if the element at a given position
     ///     matches. Used to detect duplicates.
@@ -26,9 +26,9 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     @discardableResult
     public mutating func insert(
-        position: Index<Element>,
+        position: Index<Element>.Bounded<bucketCapacity>,
         hashValue: Hash.Value,
-        equals: (Index<Element>) -> Bool
+        equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool
     ) -> Bool {
         // Check if table is full
         if isFull {
@@ -76,7 +76,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// Use when you know the element is not already in the table.
     ///
     /// - Parameters:
-    ///   - position: The typed position in external storage.
+    ///   - position: The bounded position in external storage.
     ///   - hashValue: The hash value of the element.
     /// - Returns: `true` if inserted, `false` if table is full.
     ///
@@ -85,7 +85,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     @discardableResult
     public mutating func insert(
         __unchecked: Void,
-        position: Index<Element>,
+        position: Index<Element>.Bounded<bucketCapacity>,
         hashValue: Hash.Value
     ) -> Bool {
         if isFull {

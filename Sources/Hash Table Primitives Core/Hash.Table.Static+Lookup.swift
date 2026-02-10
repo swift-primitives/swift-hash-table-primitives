@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 extension Hash.Table.Static where Element: ~Copyable {
-    /// Finds the position for an element with the given hash value.
+    /// Finds the bounded position for an element with the given hash value.
     ///
     /// Uses linear probing to search for the element. The `equals` closure
     /// is called on hash collisions to verify the correct element.
@@ -19,14 +19,14 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///   - hashValue: The hash value of the element to find.
     ///   - equals: A closure that checks if the element at a given position
     ///     matches the search element. Called for hash collisions.
-    /// - Returns: The typed position in external storage if found, or `nil`.
+    /// - Returns: The bounded position in external storage if found, or `nil`.
     ///
     /// - Complexity: O(1) average, O(n) worst case.
     @inlinable
     public borrowing func position(
         forHash hashValue: Hash.Value,
-        equals: (Index<Element>) -> Bool
-    ) -> Index<Element>? {
+        equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool
+    ) -> Index<Element>.Bounded<bucketCapacity>? {
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket(for: hash)
 
@@ -59,7 +59,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     public borrowing func bucketIndex(
         forHash hashValue: Hash.Value,
-        equals: (Index<Element>) -> Bool
+        equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool
     ) -> BucketIndex? {
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket(for: hash)
@@ -92,7 +92,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     public borrowing func contains(
         hashValue: Hash.Value,
-        equals: (Index<Element>) -> Bool
+        equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool
     ) -> Bool {
         position(forHash: hashValue, equals: equals) != nil
     }

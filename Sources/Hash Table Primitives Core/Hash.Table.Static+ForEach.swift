@@ -12,13 +12,13 @@
 extension Hash.Table.Static where Element: ~Copyable {
     /// Iterates over all occupied buckets (non-empty, non-deleted).
     ///
-    /// - Parameter body: A closure called with the bucket index, stored hash value,
-    ///   and element position for each occupied bucket.
+    /// - Parameter body: A closure called with the bucket index and
+    ///   bounded element position for each occupied bucket.
     ///
     /// - Complexity: O(n) where n is bucket capacity.
     @inlinable
     package borrowing func eachOccupied(
-        _ body: (_ bucket: BucketIndex, _ position: Index<Element>) -> Void
+        _ body: (_ bucket: BucketIndex, _ position: Index<Element>.Bounded<bucketCapacity>) -> Void
     ) {
         Self.forEachBucketIndex { bucketIdx in
             let hash = readHash(at: bucketIdx)
@@ -33,11 +33,11 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///
     /// A simpler variant that only provides positions, not bucket indices or hashes.
     ///
-    /// - Parameter body: A closure called with each element position.
+    /// - Parameter body: A closure called with each bounded element position.
     ///
     /// - Complexity: O(n) where n is bucket capacity.
     @inlinable
-    package borrowing func eachPosition(_ body: (Index<Element>) -> Void) {
+    package borrowing func eachPosition(_ body: (Index<Element>.Bounded<bucketCapacity>) -> Void) {
         Self.forEachBucketIndex { bucketIdx in
             let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
@@ -49,7 +49,7 @@ extension Hash.Table.Static where Element: ~Copyable {
 
     /// Iterates over all occupied buckets with early exit support.
     ///
-    /// - Parameter body: A closure called with bucket index, hash, and position.
+    /// - Parameter body: A closure called with bucket index, hash, and bounded position.
     ///   Return `true` to continue iteration, `false` to stop.
     /// - Returns: `true` if iteration completed, `false` if stopped early.
     ///
@@ -57,7 +57,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     @discardableResult
     package borrowing func eachOccupiedWhile(
-        _ body: (_ bucket: BucketIndex, _ hash: Int, _ position: Index<Element>) -> Bool
+        _ body: (_ bucket: BucketIndex, _ hash: Int, _ position: Index<Element>.Bounded<bucketCapacity>) -> Bool
     ) -> Bool {
         // Manual loop required for early exit support
         for i in 0..<bucketCapacity {

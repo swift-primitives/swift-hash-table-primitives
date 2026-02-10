@@ -13,6 +13,7 @@ public import Hash_Primitives
 public import Index_Primitives
 public import Cardinal_Primitives
 public import Cyclic_Index_Primitives
+public import Finite_Primitives
 public import Buffer_Slots_Primitives
 
 extension Hash {
@@ -285,15 +286,20 @@ extension Hash {
             }
 
             /// Reads the element position stored at the given bucket.
+            ///
+            /// Positions are bounded by `bucketCapacity` — the invariant is
+            /// maintained by `writePosition` which only accepts bounded values.
             @inlinable
-            func readPosition(at bucket: BucketIndex) -> Index<Element> {
-                Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: _positions[Int(bitPattern: bucket.position)])))
+            func readPosition(at bucket: BucketIndex) -> Index<Element>.Bounded<bucketCapacity> {
+                let ordinal = Ordinal(UInt(bitPattern: _positions[Int(bitPattern: bucket.position)]))
+                let finite: Ordinal.Finite<bucketCapacity> = .init(__unchecked: (), ordinal)
+                return .init(__unchecked: (), finite)
             }
 
             /// Writes an element position at the given bucket.
             @inlinable
-            mutating func writePosition(at bucket: BucketIndex, value: Index<Element>) {
-                _positions[Int(bitPattern: bucket.position)] = Int(bitPattern: value.position)
+            mutating func writePosition(at bucket: BucketIndex, value: Index<Element>.Bounded<bucketCapacity>) {
+                _positions[Int(bitPattern: bucket.position)] = Int(bitPattern: value.rawValue.ordinal)
             }
         }
     }

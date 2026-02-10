@@ -34,7 +34,7 @@ struct HashTableInlineTests {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert position 0 with hash 42
-        let position: Index<InlineTestElement> = 0
+        let position: Index<InlineTestElement>.Bounded<16> = 0
         let inserted = table.insert(position: position, hashValue: 42, equals: { _ in false })
         #expect(inserted == true)
         let expectedCount: Index<InlineTestElement>.Count = 1
@@ -53,8 +53,8 @@ struct HashTableInlineTests {
     func duplicateRejection() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
-        let position0: Index<InlineTestElement> = 0
-        let position1: Index<InlineTestElement> = 1
+        let position0: Index<InlineTestElement>.Bounded<16> = 0
+        let position1: Index<InlineTestElement>.Bounded<16> = 1
         let first = table.insert(position: position0, hashValue: 42, equals: { _ in false })
         #expect(first == true)
 
@@ -69,8 +69,8 @@ struct HashTableInlineTests {
     func removalWithTombstone() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
-        let position0: Index<InlineTestElement> = 0
-        let position1: Index<InlineTestElement> = 1
+        let position0: Index<InlineTestElement>.Bounded<16> = 0
+        let position1: Index<InlineTestElement>.Bounded<16> = 1
         table.insert(position: position0, hashValue: 42, equals: { _ in false })
         table.insert(position: position1, hashValue: 99, equals: { _ in false })
         let expectedCount2: Index<InlineTestElement>.Count = 2
@@ -95,9 +95,9 @@ struct HashTableInlineTests {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert positions 0, 1, 2
-        let position0: Index<InlineTestElement> = 0
-        let position1: Index<InlineTestElement> = 1
-        let position2: Index<InlineTestElement> = 2
+        let position0: Index<InlineTestElement>.Bounded<16> = 0
+        let position1: Index<InlineTestElement>.Bounded<16> = 1
+        let position2: Index<InlineTestElement>.Bounded<16> = 2
         table.insert(position: position0, hashValue: 10, equals: { _ in false })
         table.insert(position: position1, hashValue: 20, equals: { _ in false })
         table.insert(position: position2, hashValue: 30, equals: { _ in false })
@@ -120,7 +120,7 @@ struct HashTableInlineTests {
 
         // Fill up to capacity
         for i in 0..<8 {
-            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            let position: Index<InlineTestElement>.Bounded<8> = .init(Index<InlineTestElement>(Ordinal(UInt(i))))!
             let hashValue: Hash.Value = Hash.Value(__unchecked: (), i * 17 + 1) // Unique hashes
             let result = table.insert(position: position, hashValue: hashValue, equals: { _ in false })
             // First 5 should succeed easily, then depends on load factor
@@ -138,7 +138,7 @@ struct HashTableInlineTests {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         for i in 0..<10 {
-            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            let position: Index<InlineTestElement>.Bounded<16> = .init(Index<InlineTestElement>(Ordinal(UInt(i))))!
             let hashValue: Hash.Value = Hash.Value(__unchecked: (), i * 3)
             table.insert(position: position, hashValue: hashValue, equals: { _ in false })
         }
@@ -157,9 +157,9 @@ struct HashTableInlineTests {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert multiple elements with the same hash
-        let position0: Index<InlineTestElement> = 0
-        let position1: Index<InlineTestElement> = 1
-        let position2: Index<InlineTestElement> = 2
+        let position0: Index<InlineTestElement>.Bounded<16> = 0
+        let position1: Index<InlineTestElement>.Bounded<16> = 1
+        let position2: Index<InlineTestElement>.Bounded<16> = 2
         table.insert(position: position0, hashValue: 42, equals: { _ in false })
         table.insert(position: position1, hashValue: 42, equals: { _ in false })
         table.insert(position: position2, hashValue: 42, equals: { _ in false })
@@ -179,13 +179,13 @@ struct HashTableInlineTests {
 
         // Insert 5 elements
         for i in 0..<5 {
-            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            let position: Index<InlineTestElement>.Bounded<16> = .init(Index<InlineTestElement>(Ordinal(UInt(i))))!
             table.insert(position: position, hashValue: Hash.Value(__unchecked: (), i * 7), equals: { _ in false })
         }
 
         // Remove 3 elements (creates tombstones)
         for i in 0..<3 {
-            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            let position: Index<InlineTestElement>.Bounded<16> = .init(Index<InlineTestElement>(Ordinal(UInt(i))))!
             table.remove(hashValue: Hash.Value(__unchecked: (), i * 7), equals: { $0 == position })
         }
 
@@ -197,8 +197,8 @@ struct HashTableInlineTests {
         #expect(occupiedAfter < occupiedBefore)
 
         // Remaining elements should still be findable
-        let position3: Index<InlineTestElement> = 3
-        let position4: Index<InlineTestElement> = 4
+        let position3: Index<InlineTestElement>.Bounded<16> = 3
+        let position4: Index<InlineTestElement>.Bounded<16> = 4
         let hash3: Hash.Value = Hash.Value(__unchecked: (), 3 * 7)
         let hash4: Hash.Value = Hash.Value(__unchecked: (), 4 * 7)
         #expect(table.position(forHash: hash3, equals: { $0 == position3 }) == position3)
@@ -211,19 +211,19 @@ struct HashTableInlineTests {
 
         // Insert 5 elements
         for i in 0..<5 {
-            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            let position: Index<InlineTestElement>.Bounded<16> = .init(Index<InlineTestElement>(Ordinal(UInt(i))))!
             table.insert(position: position, hashValue: Hash.Value(__unchecked: (), i * 11), equals: { _ in false })
         }
 
         // Collect positions via forEach
-        var positions: [Index<InlineTestElement>] = []
+        var positions: [Index<InlineTestElement>.Bounded<16>] = []
         table.forEach.position { positions.append($0) }
 
         #expect(positions.count == 5)
 
         // All original positions should be present
         for i in 0..<5 {
-            let position: Index<InlineTestElement> = Index(Ordinal(UInt(i)))
+            let position: Index<InlineTestElement>.Bounded<16> = .init(Index<InlineTestElement>(Ordinal(UInt(i))))!
             #expect(positions.contains(position))
         }
     }
@@ -232,8 +232,8 @@ struct HashTableInlineTests {
     func updatePosition() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
-        let position0: Index<InlineTestElement> = 0
-        let position5: Index<InlineTestElement> = 5
+        let position0: Index<InlineTestElement>.Bounded<16> = 0
+        let position5: Index<InlineTestElement>.Bounded<16> = 5
         table.insert(position: position0, hashValue: 42, equals: { _ in false })
 
         // Update position from 0 to 5
@@ -250,7 +250,7 @@ struct HashTableInlineTests {
     func containsCheck() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
-        let position: Index<InlineTestElement> = 0
+        let position: Index<InlineTestElement>.Bounded<16> = 0
         table.insert(position: position, hashValue: 42, equals: { _ in false })
 
         #expect(table.contains(hashValue: 42, equals: { $0 == position }) == true)
@@ -261,8 +261,8 @@ struct HashTableInlineTests {
     func uncheckedInsert() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
-        let position0: Index<InlineTestElement> = 0
-        let position1: Index<InlineTestElement> = 1
+        let position0: Index<InlineTestElement>.Bounded<16> = 0
+        let position1: Index<InlineTestElement>.Bounded<16> = 1
 
         let result1 = table.insert(__unchecked: (), position: position0, hashValue: 42)
         #expect(result1 == true)
@@ -277,14 +277,16 @@ struct HashTableInlineTests {
     @Test("Copyable when Element is Copyable")
     func copyableWhenElementCopyable() throws {
         var table = Hash.Table<Int>.Static<16>()
-        table.insert(position: 0, hashValue: 42, equals: { _ in false })
+        let pos0: Index<Int>.Bounded<16> = 0
+        let pos1: Index<Int>.Bounded<16> = 1
+        table.insert(position: pos0, hashValue: 42, equals: { _ in false })
 
         // Should be copyable
         let copy = table
         #expect(copy.count == table.count)
 
         // Modifications to original don't affect copy (value semantics)
-        table.insert(position: 1, hashValue: 99, equals: { _ in false })
+        table.insert(position: pos1, hashValue: 99, equals: { _ in false })
         let expectedCount1: Index<Int>.Count = 1
         let expectedCount2: Index<Int>.Count = 2
         #expect(copy.count == expectedCount1)

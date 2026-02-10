@@ -11,14 +11,18 @@
 
 extension Hash.Table.Static where Element: ~Copyable {
     /// Decrements all positions greater than `removedPosition` (internal helper for Property accessor).
+    ///
+    /// When an element is removed from external storage, all positions after
+    /// the removed position shift down by one. The predecessor is safe because
+    /// `pos > removedPosition` guarantees `pos > 0`.
     @inlinable
-    package mutating func decrementAllPositions(after removedPosition: Index<Element>) {
+    package mutating func decrementAllPositions(after removedPosition: Index<Element>.Bounded<bucketCapacity>) {
         Self.forEachBucketIndex { bucketIdx in
             let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
                 let pos = readPosition(at: bucketIdx)
                 if pos > removedPosition {
-                    writePosition(at: bucketIdx, value: try! pos.predecessor.exact())
+                    writePosition(at: bucketIdx, value: pos.map { $0.predecessor()! })
                 }
             }
         }
@@ -29,8 +33,8 @@ extension Hash.Table.Static where Element: ~Copyable {
     @discardableResult
     package mutating func updatePositionInternal(
         forHash hashValue: Hash.Value,
-        equals: (Index<Element>) -> Bool,
-        newPosition: Index<Element>
+        equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool,
+        newPosition: Index<Element>.Bounded<bucketCapacity>
     ) -> Bool {
         guard let bucket = bucketIndex(forHash: hashValue, equals: equals) else {
             return false
@@ -41,7 +45,7 @@ extension Hash.Table.Static where Element: ~Copyable {
 
     /// Updates position at a specific bucket index (internal helper for Property accessor).
     @inlinable
-    package mutating func updatePositionInternal(atBucket bucket: BucketIndex, newPosition: Index<Element>) {
+    package mutating func updatePositionInternal(atBucket bucket: BucketIndex, newPosition: Index<Element>.Bounded<bucketCapacity>) {
         precondition(
             readHash(at: bucket) != Self.empty && readHash(at: bucket) != Self.deleted,
             "Cannot update position of empty or deleted bucket"

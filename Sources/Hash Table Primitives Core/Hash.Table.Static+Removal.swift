@@ -18,15 +18,15 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///   - hashValue: The hash value of the element to remove.
     ///   - equals: A closure that checks if the element at a given position
     ///     matches the element to remove.
-    /// - Returns: The typed position that was removed, or `nil` if not found.
+    /// - Returns: The bounded position that was removed, or `nil` if not found.
     ///
     /// - Complexity: O(1) average, O(n) worst case.
     @inlinable
     @discardableResult
     public mutating func remove(
         hashValue: Hash.Value,
-        equals: (Index<Element>) -> Bool
-    ) -> Index<Element>? {
+        equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool
+    ) -> Index<Element>.Bounded<bucketCapacity>? {
         guard let bucket = bucketIndex(forHash: hashValue, equals: equals) else {
             return nil
         }
@@ -41,12 +41,12 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// Removes the element at a specific bucket index.
     ///
     /// - Parameter bucket: The bucket index to remove.
-    /// - Returns: The position that was stored at the bucket.
+    /// - Returns: The bounded position that was stored at the bucket.
     ///
     /// - Precondition: The bucket must contain a valid element (not empty or deleted).
     @inlinable
     @discardableResult
-    public mutating func remove(atBucket bucket: BucketIndex) -> Index<Element> {
+    public mutating func remove(atBucket bucket: BucketIndex) -> Index<Element>.Bounded<bucketCapacity> {
         precondition(
             readHash(at: bucket) != Self.empty && readHash(at: bucket) != Self.deleted,
             "Cannot remove from empty or deleted bucket"
@@ -76,7 +76,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     public mutating func rehash() {
         // Collect all active entries
-        var entries: [(hash: Int, position: Index<Element>)] = []
+        var entries: [(hash: Int, position: Index<Element>.Bounded<bucketCapacity>)] = []
         entries.reserveCapacity(Int(bitPattern: _count))
 
         Self.forEachBucketIndex { bucketIdx in

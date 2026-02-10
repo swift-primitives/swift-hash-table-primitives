@@ -33,19 +33,19 @@ where Tag == Hash.Table<Element>.ForEach,
 {
     /// Iterates over all occupied buckets (non-empty, non-deleted).
     ///
-    /// - Parameter body: A closure called with each occupied bucket's index and stored position.
+    /// - Parameter body: A closure called with each occupied bucket's index and bounded position.
     @inlinable
     public func occupied(
-        _ body: (Hash.Table<Element>.BucketIndex, Index<Element>) -> Void
+        _ body: (Hash.Table<Element>.BucketIndex, Index<Element>.Bounded<n>) -> Void
     ) {
         unsafe base.pointee.eachOccupied(body)
     }
 
-    /// Iterates over all element positions in the hash table.
+    /// Iterates over all bounded element positions in the hash table.
     ///
-    /// - Parameter body: A closure called with each element position.
+    /// - Parameter body: A closure called with each bounded element position.
     @inlinable
-    public func position(_ body: (Index<Element>) -> Void) {
+    public func position(_ body: (Index<Element>.Bounded<n>) -> Void) {
         unsafe base.pointee.eachPosition(body)
     }
 }
