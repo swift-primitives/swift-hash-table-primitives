@@ -41,10 +41,10 @@ extension Hash.Occupied.Static {
             while _index < _capacity {
                 let bucket = _index
                 _index += .one
-                let hash = _hashes[position: bucket]
+                let hash = _hashes[bucket]
                 if hash != Hash.Table<Source>.empty && hash != Hash.Table<Source>.deleted {
                     let position = Index<Source>(
-                        __unchecked: (), Ordinal(UInt(bitPattern: _positions[position: bucket]))
+                        __unchecked: (), Ordinal(UInt(bitPattern: _positions[bucket]))
                     )
                     return Hash.Occupied(bucket: bucket, hash: hash, position: position)
                 }

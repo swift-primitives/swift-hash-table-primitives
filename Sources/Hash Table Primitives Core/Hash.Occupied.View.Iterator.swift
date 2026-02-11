@@ -42,10 +42,10 @@ extension Hash.Occupied.View {
             while _index < _capacity {
                 let bucket = _index
                 _index += .one
-                let hash = unsafe _hashes[position: bucket]
+                let hash = unsafe _hashes[bucket]
                 if hash != Hash.Table<Source>.empty && hash != Hash.Table<Source>.deleted {
                     let position = Index<Source>(
-                        __unchecked: (), Ordinal(UInt(bitPattern: unsafe _positions[position: bucket]))
+                        __unchecked: (), Ordinal(UInt(bitPattern: unsafe _positions[bucket]))
                     )
                     return Hash.Occupied(bucket: bucket, hash: hash, position: position)
                 }
