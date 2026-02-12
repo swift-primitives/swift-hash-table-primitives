@@ -312,7 +312,7 @@ extension Hash {
 // MARK: - Conditional Conformances (must be same file)
 
 extension Hash.Table: Copyable where Element: Copyable {}
-extension Hash.Table: @unchecked Sendable where Element: ~Copyable {}
+extension Hash.Table: @unchecked Sendable where Element: Sendable {}
 
 extension Hash.Table.Static: Copyable where Element: Copyable {}
 extension Hash.Table.Static: @unchecked Sendable where Element: Sendable {}
