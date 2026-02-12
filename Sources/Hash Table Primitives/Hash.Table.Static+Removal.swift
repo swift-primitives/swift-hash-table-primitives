@@ -13,16 +13,17 @@ public import Hash_Table_Primitives_Core
 public import Property_Primitives
 
 extension Hash.Table.Static where Element: ~Copyable {
+    public enum Remove {
+        public typealias View = Property<Hash.Table<Element>.Remove, Hash.Table<Element>.Static<bucketCapacity>>.View.Typed<Element>.Valued<bucketCapacity>
+    }
+}
+
+extension Hash.Table.Static where Element: ~Copyable {
     /// Access remove operations.
     @inlinable
-    public var remove: Property<Hash.Table<Element>.Remove, Self>.View.Typed<Element>.Valued<bucketCapacity> {
-        mutating _read {
-            yield unsafe .init(&self)
-        }
-        mutating _modify {
-            var view = unsafe Property<Hash.Table<Element>.Remove, Self>.View.Typed<Element>.Valued<bucketCapacity>(&self)
-            yield &view
-        }
+    public var remove: Remove.View {
+        mutating _read { yield unsafe .init(&self) }
+        mutating _modify { var view: Remove.View = unsafe .init(&self); yield &view }
     }
 }
 

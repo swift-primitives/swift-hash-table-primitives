@@ -13,16 +13,20 @@ public import Hash_Table_Primitives_Core
 public import Property_Primitives
 
 extension Hash.Table.Static where Element: ~Copyable {
+    public enum ForEach {
+        public typealias View = Property<Hash.Table<Element>.ForEach, Hash.Table<Element>.Static<bucketCapacity>>.View.Typed<Element>.Valued<bucketCapacity>
+    }
+}
+
+extension Hash.Table.Static where Element: ~Copyable {
     /// Access forEach operations.
     ///
     /// Usage:
     /// - `table.forEach.occupied { bucket, position in ... }`
     /// - `table.forEach.position { position in ... }`
     @inlinable
-    public var forEach: Property<Hash.Table<Element>.ForEach, Self>.View.Typed<Element>.Valued<bucketCapacity> {
-        mutating _read {
-            yield unsafe .init(&self)
-        }
+    public var forEach: ForEach.View {
+        mutating _read { yield unsafe .init(&self) }
     }
 }
 
