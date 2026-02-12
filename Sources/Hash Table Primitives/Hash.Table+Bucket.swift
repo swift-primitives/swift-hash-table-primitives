@@ -12,6 +12,10 @@
 public import Hash_Table_Primitives_Core
 public import Property_Primitives
 
+extension Hash.Table.BucketOps where Element: ~Copyable {
+    public typealias View = Property<Hash.Table<Element>.BucketOps, Hash.Table<Element>>.View.Typed<Element>
+}
+
 extension Hash.Table where Element: ~Copyable {
     /// Access bucket operations.
     ///
@@ -19,9 +23,9 @@ extension Hash.Table where Element: ~Copyable {
     /// - `table.bucket.for(hash: hashValue)`
     /// - `table.bucket.next(currentBucket)`
     @inlinable
-    public var bucket: Property<BucketOps, Self>.View.Typed<Element> {
+    public var bucket: BucketOps.View {
         mutating _read {
-            yield unsafe Property<BucketOps, Self>.View.Typed(&self)
+            yield unsafe .init(&self)
         }
     }
 }

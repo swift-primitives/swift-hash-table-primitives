@@ -13,15 +13,19 @@ public import Hash_Table_Primitives_Core
 public import Ordinal_Primitives
 public import Property_Primitives
 
+extension Hash.Table.Positions where Element: ~Copyable {
+    public typealias View = Property<Hash.Table<Element>.Positions, Hash.Table<Element>>.View.Typed<Element>
+}
+
 extension Hash.Table where Element: ~Copyable {
     /// Access position update operations.
     @inlinable
-    public var positions: Property<Positions, Self>.View.Typed<Element> {
+    public var positions: Positions.View {
         mutating _read {
-            yield unsafe Property<Positions, Self>.View.Typed(&self)
+            yield unsafe .init(&self)
         }
         mutating _modify {
-            var view = unsafe Property<Positions, Self>.View.Typed<Element>(&self)
+            var view: Positions.View = unsafe .init(&self)
             yield &view
         }
     }

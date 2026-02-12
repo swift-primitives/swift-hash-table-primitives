@@ -13,6 +13,10 @@ public import Hash_Table_Primitives_Core
 public import Cardinal_Primitives
 public import Property_Primitives
 
+extension Hash.Table.Remove where Element: ~Copyable {
+    public typealias View = Property<Hash.Table<Element>.Remove, Hash.Table<Element>>.View.Typed<Element>
+}
+
 extension Hash.Table where Element: ~Copyable {
     /// Removes an element from the hash table.
     ///
@@ -52,12 +56,12 @@ extension Hash.Table where Element: ~Copyable {
 
     /// Access remove operations.
     @inlinable
-    public var remove: Property<Remove, Self>.View.Typed<Element> {
+    public var remove: Remove.View {
         mutating _read {
-            yield unsafe Property<Remove, Self>.View.Typed(&self)
+            yield unsafe .init(&self)
         }
         mutating _modify {
-            var view = unsafe Property<Remove, Self>.View.Typed<Element>(&self)
+            var view: Remove.View = unsafe .init(&self)
             yield &view
         }
     }

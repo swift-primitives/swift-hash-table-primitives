@@ -12,14 +12,18 @@
 public import Hash_Table_Primitives_Core
 public import Property_Primitives
 
+extension Hash.Table.ForEach where Element: ~Copyable {
+    public typealias View = Property<Hash.Table<Element>.ForEach, Hash.Table<Element>>.View.Typed<Element>
+}
+
 extension Hash.Table where Element: ~Copyable {
     /// Access forEach operations.
     ///
     /// Usage: `table.forEach.occupied { bucket, position in ... }`
     @inlinable
-    public var forEach: Property<ForEach, Self>.View.Typed<Element> {
+    public var forEach: ForEach.View {
         mutating _read {
-            yield unsafe Property<ForEach, Self>.View.Typed(&self)
+            yield unsafe .init(&self)
         }
     }
 }
