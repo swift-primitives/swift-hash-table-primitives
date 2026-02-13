@@ -15,7 +15,7 @@ extension Hash.Occupied.View {
     /// Linear scan through all buckets, skipping empty (`0`) and deleted
     /// (`Int.min`) sentinels. Yields `Hash.Occupied<Source>` for each
     /// occupied bucket.
-    public struct Iterator: IteratorProtocol {
+    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
         let _hashes: UnsafePointer<Int>
 

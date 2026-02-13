@@ -15,7 +15,7 @@ extension Hash.Occupied.Static {
     /// Same linear scan as `View.Iterator` but reads from copied `InlineArray`
     /// instead of pointers.
     @safe
-    public struct Iterator: IteratorProtocol {
+    public struct Iterator: Sequence.Iterator.`Protocol`, IteratorProtocol {
         @usableFromInline
         let _hashes: InlineArray<bucketCapacity, Int>
 
