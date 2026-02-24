@@ -120,7 +120,10 @@ extension Hash.Table where Element: ~Copyable {
     @inlinable
     mutating func grow() {
         let oldCapacity = bucketCapacity
-        let newCapacity = Index<Bucket>.Count(Cardinal(UInt(max(8, Int(bitPattern: oldCapacity) * 2))))
+        let newCapacity = Index<Bucket>.Count.max(
+            Index<Bucket>.Count(Cardinal(8 as UInt)),
+            oldCapacity * 2
+        )
         var newBuffer = Buffer<Int>.Slots<Int>(
             capacity: newCapacity.retag(Int.self),
             metadataInitial: Self.empty
@@ -128,7 +131,8 @@ extension Hash.Table where Element: ~Copyable {
         newBuffer.fill(payload: 0)
 
         var bucket: BucketIndex = .zero
-        while bucket < oldCapacity {
+        var remaining = _count
+        while bucket < oldCapacity, remaining != .zero {
             let hash = self[hash: bucket]
             if hash != Self.empty && hash != Self.deleted {
                 let position = self[position: bucket]
@@ -145,6 +149,7 @@ extension Hash.Table where Element: ~Copyable {
 
                 newBuffer[metadata: targetBucket.retag(Int.self)] = hash
                 newBuffer[payload: targetBucket.retag(Int.self)] = Int(bitPattern: position.position.rawValue)
+                remaining = remaining.subtract.saturating(.one)
             }
             bucket += .one
         }
