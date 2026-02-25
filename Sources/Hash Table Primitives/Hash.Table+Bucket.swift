@@ -17,6 +17,15 @@ extension Hash.Table.BucketOps where Element: ~Copyable {
 }
 
 extension Hash.Table where Element: ~Copyable {
+    /// Maps a normalized hash into the bucket space for the given capacity.
+    @inlinable
+    package static func bucket(
+        for hash: Int,
+        capacity: Index<Bucket>.Count
+    ) -> BucketIndex {
+        BucketIndex(__unchecked: (), Ordinal(UInt(bitPattern: hash)) % capacity.rawValue)
+    }
+
     /// Access bucket operations.
     ///
     /// Usage:
@@ -41,8 +50,7 @@ where Tag == Hash.Table<Element>.BucketOps, Base == Hash.Table<Element>, Element
     @inlinable
     public func `for`(hash: Int) -> Hash.Table<Element>.BucketIndex {
         let capacity = unsafe base.pointee.bucketCapacity
-        let bucketOrd = Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
-        return Hash.Table<Element>.BucketIndex(__unchecked: (), bucketOrd)
+        return Hash.Table<Element>.bucket(for: hash, capacity: capacity)
     }
 
     /// Computes the next bucket in the probe sequence.
