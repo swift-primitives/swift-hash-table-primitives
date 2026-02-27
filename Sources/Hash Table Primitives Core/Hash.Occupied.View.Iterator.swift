@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+import Cardinal_Primitives
+
 extension Hash.Occupied.View {
     /// An iterator that scans occupied buckets from pointer-based storage.
     ///
@@ -28,6 +30,9 @@ extension Hash.Occupied.View {
         @usableFromInline
         var _index: Hash.Table<Source>.BucketIndex
 
+        @usableFromInline
+        var _spanBuffer: [Hash.Occupied<Source>] = []
+
         @inlinable
         package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Hash.Table<Source>.BucketIndex.Count) {
             unsafe self._hashes = hashes
@@ -36,6 +41,27 @@ extension Hash.Occupied.View {
             self._index = .zero
         }
 
+        @_lifetime(&self)
+        @inlinable
+        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Hash.Occupied<Source>> {
+            _spanBuffer.removeAll(keepingCapacity: true)
+            var remaining = Int(maximumCount.rawValue)
+            while remaining > 0, _index < _capacity {
+                let bucket = _index
+                _index += .one
+                let hash = unsafe _hashes[bucket]
+                if hash != Hash.Table<Source>.empty && hash != Hash.Table<Source>.deleted {
+                    let position = Index<Source>(
+                        __unchecked: (), Ordinal(UInt(bitPattern: unsafe _positions[bucket]))
+                    )
+                    _spanBuffer.append(Hash.Occupied(bucket: bucket, hash: hash, position: position))
+                    remaining -= 1
+                }
+            }
+            return _spanBuffer.span
+        }
+
+        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Hash.Occupied<Source>? {
             while _index < _capacity {
