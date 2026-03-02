@@ -52,6 +52,52 @@ extension Hash.Table.Static where Element: ~Copyable {
         return nil
     }
 
+    /// Finds the bounded position for an element with the given hash value,
+    /// passing a context value through to the equality closure.
+    ///
+    /// This overload avoids capturing the search element in the closure,
+    /// which is required when the element is `borrowing` and `~Copyable`.
+    /// The context is passed as a parameter to each `equals` invocation.
+    ///
+    /// - Parameters:
+    ///   - hashValue: The hash value of the element to find.
+    ///   - context: A value passed through to `equals` on each probe.
+    ///   - equals: A closure that checks if the element at a given position
+    ///     matches the context. Called for hash collisions.
+    /// - Returns: The bounded position in external storage if found, or `nil`.
+    ///
+    /// - Complexity: O(1) average, O(n) worst case.
+    @inlinable
+    public borrowing func position<Context: ~Copyable>(
+        forHash hashValue: Hash.Value,
+        context: borrowing Context,
+        equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool
+    ) -> Index<Element>.Bounded<bucketCapacity>? {
+        let hash = Self.normalize(hashValue)
+        var currentBucket = bucket(for: hash)
+        var probes = 0
+
+        while probes < bucketCapacity {
+            let storedHash = readHash(at: currentBucket)
+
+            if storedHash == Self.empty {
+                return nil
+            }
+
+            if storedHash == hash {
+                let position = readPosition(at: currentBucket)
+                if equals(position, context) {
+                    return position
+                }
+            }
+
+            currentBucket = bucket(after: currentBucket)
+            probes += 1
+        }
+
+        return nil
+    }
+
     /// Finds the bucket index for an element with the given hash value.
     ///
     /// - Parameters:
