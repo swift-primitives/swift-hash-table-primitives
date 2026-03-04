@@ -31,7 +31,7 @@ extension Hash.Occupied.View {
         var _index: Hash.Table<Source>.BucketIndex
 
         @usableFromInline
-        var _spanBuffer: [Hash.Occupied<Source>] = []
+        var _element: Hash.Occupied<Source>? = nil
 
         @inlinable
         package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Hash.Table<Source>.BucketIndex.Count) {
@@ -44,21 +44,22 @@ extension Hash.Occupied.View {
         @_lifetime(&self)
         @inlinable
         public mutating func nextSpan(maximumCount: Cardinal) -> Span<Hash.Occupied<Source>> {
-            _spanBuffer.removeAll(keepingCapacity: true)
-            var remaining = Int(maximumCount.rawValue)
-            while remaining > 0, _index < _capacity {
-                let bucket = _index
-                _index += .one
-                let hash = unsafe _hashes[bucket]
-                if hash != Hash.Table<Source>.empty && hash != Hash.Table<Source>.deleted {
-                    let position = Index<Source>(
-                        __unchecked: (), Ordinal(UInt(bitPattern: unsafe _positions[bucket]))
-                    )
-                    _spanBuffer.append(Hash.Occupied(bucket: bucket, hash: hash, position: position))
-                    remaining -= 1
-                }
+            let ptr = unsafe withUnsafeMutablePointer(to: &_element) { p in
+                unsafe UnsafePointer<Hash.Occupied<Source>>(
+                    unsafe UnsafeRawPointer(p).assumingMemoryBound(to: Hash.Occupied<Source>.self)
+                )
             }
-            return _spanBuffer.span
+            guard maximumCount > .zero else {
+                let span = unsafe Span(_unsafeStart: ptr, count: 0)
+                return unsafe _overrideLifetime(span, mutating: &self)
+            }
+            guard let value = next() else {
+                let span = unsafe Span(_unsafeStart: ptr, count: 0)
+                return unsafe _overrideLifetime(span, mutating: &self)
+            }
+            _element = value
+            let span = unsafe Span(_unsafeStart: ptr, count: 1)
+            return unsafe _overrideLifetime(span, mutating: &self)
         }
 
         @_lifetime(self: immortal)
