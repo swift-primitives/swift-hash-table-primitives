@@ -25,16 +25,16 @@ extension Hash.Occupied.View {
         let _positions: UnsafePointer<Int>
 
         @usableFromInline
-        let _capacity: Hash.Table<Source>.BucketIndex.Count
+        let _capacity: Hash.Table<Source>.Bucket.Index.Count
 
         @usableFromInline
-        var _index: Hash.Table<Source>.BucketIndex
+        var _index: Hash.Table<Source>.Bucket.Index
 
         @usableFromInline
         var _element: Hash.Occupied<Source>? = nil
 
         @inlinable
-        package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Hash.Table<Source>.BucketIndex.Count) {
+        package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Hash.Table<Source>.Bucket.Index.Count) {
             unsafe self._hashes = hashes
             unsafe self._positions = positions
             self._capacity = capacity

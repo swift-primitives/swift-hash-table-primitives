@@ -36,8 +36,8 @@ where Tag == Hash.Table<Element>.ForEach, Base == Hash.Table<Element>, Element: 
     ///
     /// - Parameter body: A closure called with each occupied bucket's index and stored position.
     @inlinable
-    public func occupied(_ body: (Hash.Table<Element>.BucketIndex, Index<Element>) -> Void) {
-        var bucket: Hash.Table<Element>.BucketIndex = .zero
+    public func occupied(_ body: (Hash.Table<Element>.Bucket.Index, Index<Element>) -> Void) {
+        var bucket: Hash.Table<Element>.Bucket.Index = .zero
         let cap = unsafe base.pointee.bucketCapacity
         while bucket < cap {
             let hash = unsafe base.pointee[hash: bucket]

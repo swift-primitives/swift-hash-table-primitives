@@ -20,12 +20,12 @@ extension Hash.Table.Static where Element: ~Copyable {
 
     /// The number of occupied buckets (including deleted tombstones).
     @inlinable
-    public var occupancy: BucketIndex.Count { _occupied }
+    public var occupancy: Bucket.Index.Count { _occupied }
 
     /// The bucket capacity (compile-time constant).
     @inlinable
-    public var capacity: BucketIndex.Count {
-        BucketIndex.Count(Cardinal(UInt(bucketCapacity)))
+    public var capacity: Bucket.Index.Count {
+        Bucket.Index.Count(Cardinal(UInt(bucketCapacity)))
     }
 
     /// Whether the hash table should grow (is at or above 70% load factor).

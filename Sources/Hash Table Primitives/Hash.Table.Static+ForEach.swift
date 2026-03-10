@@ -40,7 +40,7 @@ where Tag == Hash.Table<Element>.ForEach,
     /// - Parameter body: A closure called with each occupied bucket's index and bounded position.
     @inlinable
     public func occupied(
-        _ body: (Hash.Table<Element>.BucketIndex, Index<Element>.Bounded<n>) -> Void
+        _ body: (Hash.Table<Element>.Bucket.Index, Index<Element>.Bounded<n>) -> Void
     ) {
         unsafe base.pointee.eachOccupied(body)
     }

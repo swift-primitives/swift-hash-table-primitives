@@ -18,7 +18,7 @@ extension Hash {
     @safe
     public struct Occupied<Source: ~Copyable>: Copyable, Sendable {
         /// The bucket index in the hash table.
-        public let bucket: Hash.Table<Source>.BucketIndex
+        public let bucket: Hash.Table<Source>.Bucket.Index
 
         /// The post-normalization hash stored in this bucket.
         public let hash: Int
@@ -27,7 +27,7 @@ extension Hash {
         public let position: Index<Source>
 
         @inlinable
-        package init(bucket: Hash.Table<Source>.BucketIndex, hash: Int, position: Index<Source>) {
+        package init(bucket: Hash.Table<Source>.Bucket.Index, hash: Int, position: Index<Source>) {
             self.bucket = bucket
             self.hash = hash
             self.position = position

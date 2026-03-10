@@ -148,7 +148,7 @@ struct HashTableInlineTests {
         #expect(table.isEmpty == true)
         let expectedCount: Index<InlineTestElement>.Count = 0
         #expect(table.count == expectedCount)
-        let expectedOccupied: Hash.Table<InlineTestElement>.Static<16>.BucketIndex.Count = 0
+        let expectedOccupied: Hash.Table<InlineTestElement>.Static<16>.Bucket.Index.Count = 0
         #expect(table.occupancy == expectedOccupied)
     }
 

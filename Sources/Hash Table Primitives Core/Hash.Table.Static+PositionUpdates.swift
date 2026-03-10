@@ -17,7 +17,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// `pos > removedPosition` guarantees `pos > 0`.
     @inlinable
     package mutating func decrementAllPositions(after removedPosition: Index<Element>.Bounded<bucketCapacity>) {
-        Self.forEachBucketIndex { bucketIdx in
+        Self.forEachBucket { bucketIdx in
             let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
                 let pos = readPosition(at: bucketIdx)
@@ -45,7 +45,7 @@ extension Hash.Table.Static where Element: ~Copyable {
 
     /// Updates position at a specific bucket index (internal helper for Property accessor).
     @inlinable
-    package mutating func updatePositionInternal(atBucket bucket: BucketIndex, newPosition: Index<Element>.Bounded<bucketCapacity>) {
+    package mutating func updatePositionInternal(atBucket bucket: Bucket.Index, newPosition: Index<Element>.Bounded<bucketCapacity>) {
         precondition(
             readHash(at: bucket) != Self.empty && readHash(at: bucket) != Self.deleted,
             "Cannot update position of empty or deleted bucket"

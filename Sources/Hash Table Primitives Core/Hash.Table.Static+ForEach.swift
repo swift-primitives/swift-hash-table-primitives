@@ -18,9 +18,9 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Complexity: O(n) where n is bucket capacity.
     @inlinable
     package borrowing func eachOccupied(
-        _ body: (_ bucket: BucketIndex, _ position: Index<Element>.Bounded<bucketCapacity>) -> Void
+        _ body: (_ bucket: Bucket.Index, _ position: Index<Element>.Bounded<bucketCapacity>) -> Void
     ) {
-        Self.forEachBucketIndex { bucketIdx in
+        Self.forEachBucket { bucketIdx in
             let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
                 let position = readPosition(at: bucketIdx)
@@ -38,7 +38,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Complexity: O(n) where n is bucket capacity.
     @inlinable
     package borrowing func eachPosition(_ body: (Index<Element>.Bounded<bucketCapacity>) -> Void) {
-        Self.forEachBucketIndex { bucketIdx in
+        Self.forEachBucket { bucketIdx in
             let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
                 let position = readPosition(at: bucketIdx)
@@ -57,11 +57,11 @@ extension Hash.Table.Static where Element: ~Copyable {
     @inlinable
     @discardableResult
     package borrowing func eachOccupiedWhile(
-        _ body: (_ bucket: BucketIndex, _ hash: Int, _ position: Index<Element>.Bounded<bucketCapacity>) -> Bool
+        _ body: (_ bucket: Bucket.Index, _ hash: Int, _ position: Index<Element>.Bounded<bucketCapacity>) -> Bool
     ) -> Bool {
         // Manual loop required for early exit support
-        var bucket: BucketIndex = .zero
-        let cap = BucketIndex.Count(Cardinal(UInt(bucketCapacity)))
+        var bucket: Bucket.Index = .zero
+        let cap = Bucket.Index.Count(Cardinal(UInt(bucketCapacity)))
         while bucket < cap {
             let hash = readHash(at: bucket)
             if hash != Self.empty && hash != Self.deleted {

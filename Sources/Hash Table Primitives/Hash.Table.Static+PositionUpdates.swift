@@ -73,7 +73,7 @@ where Tag == Hash.Table<Element>.Positions,
     /// - Precondition: The bucket must contain a valid element.
     @_lifetime(&self)
     @inlinable
-    public mutating func update(atBucket bucket: Hash.Table<Element>.BucketIndex, newPosition: Index<Element>.Bounded<n>) {
+    public mutating func update(atBucket bucket: Hash.Table<Element>.Bucket.Index, newPosition: Index<Element>.Bounded<n>) {
         unsafe base.pointee.updatePositionInternal(atBucket: bucket, newPosition: newPosition)
     }
 }

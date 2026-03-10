@@ -42,7 +42,7 @@ where Tag == Hash.Table<Element>.Positions, Base == Hash.Table<Element>, Element
     @_lifetime(&self)
     @inlinable
     public mutating func decrement(after removedPosition: Index<Element>) {
-        var bucket: Hash.Table<Element>.BucketIndex = .zero
+        var bucket: Hash.Table<Element>.Bucket.Index = .zero
         let cap = unsafe base.pointee.bucketCapacity
         while bucket < cap {
             let hash = unsafe base.pointee[hash: bucket]

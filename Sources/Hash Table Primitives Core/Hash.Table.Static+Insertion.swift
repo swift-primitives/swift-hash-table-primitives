@@ -37,7 +37,7 @@ extension Hash.Table.Static where Element: ~Copyable {
 
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket(for: hash)
-        var firstDeleted: BucketIndex? = nil
+        var firstDeleted: Bucket.Index? = nil
         var probes = 0
 
         while probes < bucketCapacity {

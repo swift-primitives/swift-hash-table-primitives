@@ -39,7 +39,7 @@ where Tag == Hash.Table<Element>.BucketOps,
     ///
     /// - Parameter hash: A normalized hash value (output of `normalize()`).
     @inlinable
-    public func `for`(hash: Int) -> Hash.Table<Element>.BucketIndex {
+    public func `for`(hash: Int) -> Hash.Table<Element>.Bucket.Index {
         unsafe base.pointee.bucket(for: hash)
     }
 
@@ -47,7 +47,7 @@ where Tag == Hash.Table<Element>.BucketOps,
     ///
     /// - Parameter current: The current bucket index.
     @inlinable
-    public func next(_ current: Hash.Table<Element>.BucketIndex) -> Hash.Table<Element>.BucketIndex {
+    public func next(_ current: Hash.Table<Element>.Bucket.Index) -> Hash.Table<Element>.Bucket.Index {
         unsafe base.pointee.bucket(after: current)
     }
 }

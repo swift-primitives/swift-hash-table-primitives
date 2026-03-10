@@ -46,7 +46,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Precondition: The bucket must contain a valid element (not empty or deleted).
     @inlinable
     @discardableResult
-    public mutating func remove(atBucket bucket: BucketIndex) -> Index<Element>.Bounded<bucketCapacity> {
+    public mutating func remove(atBucket bucket: Bucket.Index) -> Index<Element>.Bounded<bucketCapacity> {
         precondition(
             readHash(at: bucket) != Self.empty && readHash(at: bucket) != Self.deleted,
             "Cannot remove from empty or deleted bucket"
@@ -60,7 +60,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// Clears all buckets (internal helper for Property accessor).
     @inlinable
     package mutating func clearAll() {
-        Self.forEachBucketIndex { bucketIdx in
+        Self.forEachBucket { bucketIdx in
             writeHash(at: bucketIdx, value: Self.empty)
         }
         _count = .zero
@@ -79,7 +79,7 @@ extension Hash.Table.Static where Element: ~Copyable {
         var entries: [(hash: Int, position: Index<Element>.Bounded<bucketCapacity>)] = []
         entries.reserveCapacity(Int(bitPattern: _count))
 
-        Self.forEachBucketIndex { bucketIdx in
+        Self.forEachBucket { bucketIdx in
             let hash = readHash(at: bucketIdx)
             if hash != Self.empty && hash != Self.deleted {
                 entries.append((hash: hash, position: readPosition(at: bucketIdx)))
@@ -87,7 +87,7 @@ extension Hash.Table.Static where Element: ~Copyable {
         }
 
         // Clear all buckets
-        Self.forEachBucketIndex { bucketIdx in
+        Self.forEachBucket { bucketIdx in
             writeHash(at: bucketIdx, value: Self.empty)
         }
         _occupied = .zero

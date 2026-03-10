@@ -109,7 +109,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     public borrowing func bucketIndex(
         forHash hashValue: Hash.Value,
         equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool
-    ) -> BucketIndex? {
+    ) -> Bucket.Index? {
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket(for: hash)
         var probes = 0

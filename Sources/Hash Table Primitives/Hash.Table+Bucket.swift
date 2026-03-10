@@ -22,8 +22,8 @@ extension Hash.Table where Element: ~Copyable {
     package static func bucket(
         for hash: Int,
         capacity: Index<Bucket>.Count
-    ) -> BucketIndex {
-        BucketIndex(__unchecked: (), Ordinal(UInt(bitPattern: hash)) % capacity.rawValue)
+    ) -> Bucket.Index {
+        Bucket.Index(__unchecked: (), Ordinal(UInt(bitPattern: hash)) % capacity.rawValue)
     }
 
     /// Access bucket operations.
@@ -48,7 +48,7 @@ where Tag == Hash.Table<Element>.BucketOps, Base == Hash.Table<Element>, Element
     ///
     /// - Parameter hash: A normalized hash value (output of `normalize()`).
     @inlinable
-    public func `for`(hash: Int) -> Hash.Table<Element>.BucketIndex {
+    public func `for`(hash: Int) -> Hash.Table<Element>.Bucket.Index {
         let capacity = unsafe base.pointee.bucketCapacity
         return Hash.Table<Element>.bucket(for: hash, capacity: capacity)
     }
@@ -59,8 +59,8 @@ where Tag == Hash.Table<Element>.BucketOps, Base == Hash.Table<Element>, Element
     ///
     /// Usage: `table.bucket.next(currentBucket)`
     @inlinable
-    public func next(_ bucket: Hash.Table<Element>.BucketIndex) -> Hash.Table<Element>.BucketIndex {
+    public func next(_ bucket: Hash.Table<Element>.Bucket.Index) -> Hash.Table<Element>.Bucket.Index {
         let capacity = unsafe base.pointee.bucketCapacity
-        return Hash.Table<Element>.BucketIndex.Modular.successor(of: bucket, capacity: capacity)
+        return Hash.Table<Element>.Bucket.Index.Modular.successor(of: bucket, capacity: capacity)
     }
 }

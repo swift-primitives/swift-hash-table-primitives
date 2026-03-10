@@ -26,7 +26,7 @@ extension Hash.Table where Element: ~Copyable {
     ) -> Index<Element>? {
         let hash = Self.normalize(hashValue)
         let capacity = bucketCapacity
-        var currentBucket = BucketIndex(
+        var currentBucket = Bucket.Index(
             __unchecked: (),
             Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
         )
@@ -46,7 +46,7 @@ extension Hash.Table where Element: ~Copyable {
                 }
             }
 
-            currentBucket = BucketIndex.Modular.successor(of: currentBucket, capacity: capacity)
+            currentBucket = Bucket.Index.Modular.successor(of: currentBucket, capacity: capacity)
             probes += .one
         }
 
@@ -74,7 +74,7 @@ extension Hash.Table where Element: ~Copyable {
     ) -> Index<Element>? {
         let hash = Self.normalize(hashValue)
         let capacity = bucketCapacity
-        var currentBucket = BucketIndex(
+        var currentBucket = Bucket.Index(
             __unchecked: (),
             Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
         )
@@ -94,7 +94,7 @@ extension Hash.Table where Element: ~Copyable {
                 }
             }
 
-            currentBucket = BucketIndex.Modular.successor(of: currentBucket, capacity: capacity)
+            currentBucket = Bucket.Index.Modular.successor(of: currentBucket, capacity: capacity)
             probes += .one
         }
 
@@ -112,10 +112,10 @@ extension Hash.Table where Element: ~Copyable {
     public borrowing func bucketIndex(
         forHash hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
-    ) -> BucketIndex? {
+    ) -> Bucket.Index? {
         let hash = Self.normalize(hashValue)
         let capacity = bucketCapacity
-        var currentBucket = BucketIndex(
+        var currentBucket = Bucket.Index(
             __unchecked: (),
             Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
         )
@@ -135,7 +135,7 @@ extension Hash.Table where Element: ~Copyable {
                 }
             }
 
-            currentBucket = BucketIndex.Modular.successor(of: currentBucket, capacity: capacity)
+            currentBucket = Bucket.Index.Modular.successor(of: currentBucket, capacity: capacity)
             probes += .one
         }
 

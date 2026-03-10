@@ -34,7 +34,7 @@ extension Hash.Table where Element: ~Copyable {
 
         let hash = Self.normalize(hashValue)
         var currentBucket = bucket.for(hash: hash)
-        var firstDeleted: BucketIndex? = nil
+        var firstDeleted: Bucket.Index? = nil
         var probes: Index<Bucket>.Count = .zero
         let cap = bucketCapacity
 
@@ -130,7 +130,7 @@ extension Hash.Table where Element: ~Copyable {
         )
         newBuffer.fill(payload: 0)
 
-        var bucket: BucketIndex = .zero
+        var bucket: Bucket.Index = .zero
         var remaining = _count
         while bucket < oldCapacity, remaining != .zero {
             let hash = self[hash: bucket]
@@ -140,7 +140,7 @@ extension Hash.Table where Element: ~Copyable {
 
                 var probes: Index<Bucket>.Count = .zero
                 while newBuffer[metadata: targetBucket.retag(Int.self)] != Self.empty && probes < newCapacity {
-                    targetBucket = BucketIndex.Modular.successor(of: targetBucket, capacity: newCapacity)
+                    targetBucket = Bucket.Index.Modular.successor(of: targetBucket, capacity: newCapacity)
                     probes += .one
                 }
 

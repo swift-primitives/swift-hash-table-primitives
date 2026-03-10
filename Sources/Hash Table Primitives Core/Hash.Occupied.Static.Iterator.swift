@@ -25,10 +25,10 @@ extension Hash.Occupied.Static {
         let _positions: InlineArray<bucketCapacity, Int>
 
         @usableFromInline
-        let _capacity: Hash.Table<Source>.BucketIndex.Count
+        let _capacity: Hash.Table<Source>.Bucket.Index.Count
 
         @usableFromInline
-        var _index: Hash.Table<Source>.BucketIndex
+        var _index: Hash.Table<Source>.Bucket.Index
 
         @usableFromInline
         var _element: Hash.Occupied<Source>? = nil
@@ -37,7 +37,7 @@ extension Hash.Occupied.Static {
         package init(hashes: InlineArray<bucketCapacity, Int>, positions: InlineArray<bucketCapacity, Int>) {
             self._hashes = hashes
             self._positions = positions
-            self._capacity = Hash.Table<Source>.BucketIndex.Count(Cardinal(UInt(bucketCapacity)))
+            self._capacity = Hash.Table<Source>.Bucket.Index.Count(Cardinal(UInt(bucketCapacity)))
             self._index = .zero
         }
 

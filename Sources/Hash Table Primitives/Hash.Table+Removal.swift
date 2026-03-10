@@ -45,7 +45,7 @@ extension Hash.Table where Element: ~Copyable {
     ///
     /// - Parameter bucket: The bucket index to remove.
     @inlinable
-    public mutating func remove(at bucketIdx: BucketIndex) {
+    public mutating func remove(at bucketIdx: Bucket.Index) {
         precondition(
             self[hash: bucketIdx] != Self.empty &&
             self[hash: bucketIdx] != Self.deleted

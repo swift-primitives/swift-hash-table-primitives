@@ -18,14 +18,14 @@ extension Hash.Table where Element: ~Copyable {
 
     /// Hash value at a bucket.
     @inlinable
-    package subscript(hash bucket: BucketIndex) -> Int {
+    package subscript(hash bucket: Bucket.Index) -> Int {
         get { _buffer[metadata: bucket.retag(Int.self)] }
         set { _buffer[metadata: bucket.retag(Int.self)] = newValue }
     }
 
     /// Element position at a bucket.
     @inlinable
-    package subscript(position bucket: BucketIndex) -> Index<Element> {
+    package subscript(position bucket: Bucket.Index) -> Index<Element> {
         get {
             let raw = _buffer[payload: bucket.retag(Int.self)]
             return Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: raw)))
