@@ -13,8 +13,8 @@ public import Hash_Table_Primitives_Core
 public import Property_Primitives
 
 extension Hash.Table.Static where Element: ~Copyable {
-    public enum BucketOps {
-        public typealias View = Property<Hash.Table<Element>.BucketOps, Hash.Table<Element>.Static<bucketCapacity>>.View.Typed<Element>.Valued<bucketCapacity>
+    public enum Ops {
+        public typealias View = Property<Hash.Table<Element>.Bucket.Ops, Hash.Table<Element>.Static<bucketCapacity>>.View.Typed<Element>.Valued<bucketCapacity>
     }
 }
 
@@ -25,13 +25,13 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - `table.bucket.for(hash: hashValue)`
     /// - `table.bucket.next(currentBucket)`
     @inlinable
-    public var bucket: BucketOps.View {
+    public var bucket: Ops.View {
         mutating _read { yield unsafe .init(&self) }
     }
 }
 
 extension Property.View.Typed.Valued
-where Tag == Hash.Table<Element>.BucketOps,
+where Tag == Hash.Table<Element>.Bucket.Ops,
       Base == Hash.Table<Element>.Static<n>,
       Element: ~Copyable
 {

@@ -12,8 +12,8 @@
 public import Hash_Table_Primitives_Core
 public import Property_Primitives
 
-extension Hash.Table.BucketOps where Element: ~Copyable {
-    public typealias View = Property<Hash.Table<Element>.BucketOps, Hash.Table<Element>>.View.Typed<Element>
+extension Hash.Table.Bucket.Ops where Element: ~Copyable {
+    public typealias View = Property<Hash.Table<Element>.Bucket.Ops, Hash.Table<Element>>.View.Typed<Element>
 }
 
 extension Hash.Table where Element: ~Copyable {
@@ -32,7 +32,7 @@ extension Hash.Table where Element: ~Copyable {
     /// - `table.bucket.for(hash: hashValue)`
     /// - `table.bucket.next(currentBucket)`
     @inlinable
-    public var bucket: BucketOps.View {
+    public var bucket: Bucket.Ops.View {
         mutating _read {
             yield unsafe .init(&self)
         }
@@ -40,7 +40,7 @@ extension Hash.Table where Element: ~Copyable {
 }
 
 extension Property.View.Typed
-where Tag == Hash.Table<Element>.BucketOps, Base == Hash.Table<Element>, Element: ~Copyable {
+where Tag == Hash.Table<Element>.Bucket.Ops, Base == Hash.Table<Element>, Element: ~Copyable {
     /// Computes the bucket for a normalized hash value.
     ///
     /// Maps the normalized hash value into the cyclic bucket space [0, capacity)

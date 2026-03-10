@@ -68,10 +68,10 @@ extension Hash {
         public struct Bucket: ~Copyable {
             /// Typed index into the bucket array.
             public typealias Index = Index_Primitives.Index<Bucket>
-        }
 
-        /// Tag type for bucket operations.
-        public enum BucketOps {}
+            /// Tag type for bucket operations.
+            public enum Ops {}
+        }
 
         /// Tag type for forEach operations.
         public enum ForEach {}
