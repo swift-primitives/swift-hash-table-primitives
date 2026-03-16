@@ -4,7 +4,7 @@
 ---
 version: 2.0.0
 last_updated: 2026-02-07
-status: DECISION (Provisional)
+status: DECISION
 research_tier: 2
 applies_to: [swift-hash-table-primitives, swift-buffer-primitives, swift-storage-primitives, swift-hash-primitives]
 normative: false
