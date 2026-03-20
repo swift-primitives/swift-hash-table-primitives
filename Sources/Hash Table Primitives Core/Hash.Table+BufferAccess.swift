@@ -31,7 +31,7 @@ extension Hash.Table where Element: ~Copyable {
             return Index<Element>(__unchecked: (), Ordinal(UInt(bitPattern: raw)))
         }
         set {
-            _buffer[payload: bucket.retag(Int.self)] = Int(bitPattern: newValue.position.rawValue)
+            _buffer[payload: bucket.retag(Int.self)] = Int(bitPattern: newValue)
         }
     }
 }

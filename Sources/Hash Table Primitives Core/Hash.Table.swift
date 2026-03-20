@@ -277,13 +277,13 @@ extension Hash {
             /// Reads the hash stored at the given bucket.
             @inlinable
             func readHash(at bucket: Bucket.Index) -> Int {
-                _hashes[Int(bitPattern: bucket.position)]
+                _hashes[bucket]
             }
 
             /// Writes a hash value at the given bucket.
             @inlinable
             mutating func writeHash(at bucket: Bucket.Index, value: Int) {
-                _hashes[Int(bitPattern: bucket.position)] = value
+                _hashes[bucket] = value
             }
 
             /// Reads the element position stored at the given bucket.
@@ -292,7 +292,7 @@ extension Hash {
             /// maintained by `writePosition` which only accepts bounded values.
             @inlinable
             func readPosition(at bucket: Bucket.Index) -> Index<Element>.Bounded<bucketCapacity> {
-                let ordinal = Ordinal(UInt(bitPattern: _positions[Int(bitPattern: bucket.position)]))
+                let ordinal = Ordinal(UInt(bitPattern: _positions[bucket]))
                 let finite: Ordinal.Finite<bucketCapacity> = .init(__unchecked: (), ordinal)
                 return .init(__unchecked: (), finite)
             }
@@ -300,7 +300,7 @@ extension Hash {
             /// Writes an element position at the given bucket.
             @inlinable
             mutating func writePosition(at bucket: Bucket.Index, value: Index<Element>.Bounded<bucketCapacity>) {
-                _positions[Int(bitPattern: bucket.position)] = Int(bitPattern: value.rawValue.ordinal)
+                _positions[bucket] = Int(bitPattern: value.rawValue.ordinal)
             }
         }
     }
