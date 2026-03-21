@@ -10,4 +10,5 @@
 // ===----------------------------------------------------------------------===//
 
 @_exported public import Hash_Table_Primitives_Core
-@_exported public import Hash_Table_Accessor_Primitives
+@_exported public import Property_Primitives
+@_exported public import Sequence_Primitives

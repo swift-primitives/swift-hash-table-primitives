@@ -50,13 +50,21 @@ let package = Package(
                 .product(name: "Buffer Slots Primitives", package: "swift-buffer-primitives"),
             ]
         ),
-        // Layer 2: Full API + re-export
+        // Layer 2: Property.View accessors + Sequence conformances
         .target(
-            name: "Hash Table Primitives",
+            name: "Hash Table Accessor Primitives",
             dependencies: [
                 "Hash Table Primitives Core",
                 .product(name: "Property Primitives", package: "swift-property-primitives"),
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
+            ]
+        ),
+        // Umbrella: re-export only
+        .target(
+            name: "Hash Table Primitives",
+            dependencies: [
+                "Hash Table Primitives Core",
+                "Hash Table Accessor Primitives",
             ]
         ),
         // Test Support: test helpers and re-exports
