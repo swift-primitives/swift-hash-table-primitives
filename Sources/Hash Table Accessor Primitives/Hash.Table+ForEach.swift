@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Hash_Table_Primitives_Core
-public import Property_Primitives
+internal import Property_Primitives
 
 extension Hash.Table.ForEach where Element: ~Copyable {
     public typealias View = Property<Hash.Table<Element>.ForEach, Hash.Table<Element>>.View.Typed<Element>

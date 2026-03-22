@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Hash_Table_Primitives_Core
-public import Property_Primitives
+internal import Property_Primitives
 
 extension Hash.Table.Static where Element: ~Copyable {
     public enum ForEach {

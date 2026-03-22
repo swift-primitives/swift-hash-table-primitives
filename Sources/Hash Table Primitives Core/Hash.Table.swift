@@ -11,10 +11,10 @@
 
 public import Hash_Primitives
 public import Index_Primitives
-public import Ordinal_Primitives
+internal import Ordinal_Primitives
 public import Cardinal_Primitives
-public import Cyclic_Index_Primitives
-public import Finite_Primitives
+internal import Cyclic_Index_Primitives
+internal import Finite_Primitives
 public import Buffer_Slots_Primitives
 
 extension Hash {

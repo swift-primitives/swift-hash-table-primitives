@@ -11,7 +11,7 @@
 
 public import Hash_Table_Primitives_Core
 public import Cardinal_Primitives
-public import Property_Primitives
+internal import Property_Primitives
 
 extension Hash.Table.Remove where Element: ~Copyable {
     public typealias View = Property<Hash.Table<Element>.Remove, Hash.Table<Element>>.View.Typed<Element>
