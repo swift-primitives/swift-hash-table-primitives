@@ -35,7 +35,6 @@ where Tag == Hash.Table<Element>.Remove,
     /// Removes all elements from the hash table.
     ///
     /// Resets all buckets to empty state, clearing tombstones.
-    @_lifetime(&self)
     @inlinable
     public mutating func all() {
         unsafe base.pointee.clearAll()

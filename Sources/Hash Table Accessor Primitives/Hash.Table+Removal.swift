@@ -70,7 +70,6 @@ extension Hash.Table where Element: ~Copyable {
 extension Property.View.Typed
 where Tag == Hash.Table<Element>.Remove, Base == Hash.Table<Element>, Element: ~Copyable {
     /// Removes all elements.
-    @_lifetime(&self)
     @inlinable
     public mutating func all(keepingCapacity: Bool = false) {
         if keepingCapacity {

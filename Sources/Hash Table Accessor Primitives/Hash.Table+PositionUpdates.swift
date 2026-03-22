@@ -39,7 +39,6 @@ where Tag == Hash.Table<Element>.Positions, Base == Hash.Table<Element>, Element
     /// all positions greater than `removedPosition` must be decremented.
     ///
     /// - Parameter removedPosition: The typed position that was removed.
-    @_lifetime(&self)
     @inlinable
     public mutating func decrement(after removedPosition: Index<Element>) {
         var bucket: Hash.Table<Element>.Bucket.Index = .zero
