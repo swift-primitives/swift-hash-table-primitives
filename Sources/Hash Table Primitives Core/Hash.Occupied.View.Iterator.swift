@@ -62,7 +62,6 @@ extension Hash.Occupied.View {
             return unsafe _overrideLifetime(span, mutating: &self)
         }
 
-        @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Hash.Occupied<Source>? {
             while unsafe _index < _capacity {
