@@ -31,8 +31,8 @@ extension Hash.Occupied where Source: Copyable {
         package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Hash.Table<Source>.Bucket.Index.Count, count: Index<Source>.Count) {
             unsafe self._hashes = hashes
             unsafe self._positions = positions
-            self._capacity = capacity
-            self._count = count
+            unsafe (self._capacity = capacity)
+            unsafe (self._count = count)
         }
 
         @inlinable

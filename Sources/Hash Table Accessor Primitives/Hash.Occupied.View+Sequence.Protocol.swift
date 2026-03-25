@@ -13,13 +13,13 @@ import Sequence_Primitives_Core
 
 // MARK: - Sequence.Protocol
 
-extension Hash.Occupied.View: Sequence.`Protocol` {}
+extension Hash.Occupied.View: @unsafe Sequence.`Protocol` {}
 
 // MARK: - Swift.Sequence
 
-extension Hash.Occupied.View: Swift.Sequence {
+extension Hash.Occupied.View: @unsafe Swift.Sequence {
     /// Disambiguates `underestimatedCount` between the default provided by
     /// `Sequence.Protocol where Self: Copyable` and `Swift.Sequence`.
     @inlinable
-    public var underestimatedCount: Int { Int(bitPattern: _count) }
+    public var underestimatedCount: Int { unsafe Int(bitPattern: _count) }
 }

@@ -37,8 +37,8 @@ extension Hash.Occupied.View {
         package init(hashes: UnsafePointer<Int>, positions: UnsafePointer<Int>, capacity: Hash.Table<Source>.Bucket.Index.Count) {
             unsafe self._hashes = hashes
             unsafe self._positions = positions
-            self._capacity = capacity
-            self._index = .zero
+            unsafe (self._capacity = capacity)
+            unsafe (self._index = .zero)
         }
 
         @_lifetime(&self)
@@ -53,11 +53,11 @@ extension Hash.Occupied.View {
                 let span = unsafe Span(_unsafeStart: ptr, count: 0)
                 return unsafe _overrideLifetime(span, mutating: &self)
             }
-            guard let value = next() else {
+            guard let value = unsafe next() else {
                 let span = unsafe Span(_unsafeStart: ptr, count: 0)
                 return unsafe _overrideLifetime(span, mutating: &self)
             }
-            _element = value
+            unsafe (_element = value)
             let span = unsafe Span(_unsafeStart: ptr, count: 1)
             return unsafe _overrideLifetime(span, mutating: &self)
         }
@@ -65,9 +65,9 @@ extension Hash.Occupied.View {
         @_lifetime(self: immortal)
         @inlinable
         public mutating func next() -> Hash.Occupied<Source>? {
-            while _index < _capacity {
-                let bucket = _index
-                _index += .one
+            while unsafe _index < _capacity {
+                let bucket = unsafe _index
+                unsafe (_index += .one)
                 let hash = unsafe _hashes[bucket]
                 if hash != Hash.Table<Source>.empty && hash != Hash.Table<Source>.deleted {
                     let position = Index<Source>(
