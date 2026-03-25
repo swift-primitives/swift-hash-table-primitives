@@ -14,7 +14,7 @@ extension Hash.Occupied where Source: Copyable {
     ///
     /// Captures hash and position pointers without requiring exclusive access,
     /// enabling iteration from non-mutating contexts.
-    public struct View: Copyable, @unchecked Sendable {
+    @unsafe public struct View: Copyable, @unchecked Sendable {
         @usableFromInline
         let _hashes: UnsafePointer<Int>
 
