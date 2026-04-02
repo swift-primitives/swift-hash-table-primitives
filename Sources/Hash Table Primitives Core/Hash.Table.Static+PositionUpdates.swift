@@ -43,6 +43,23 @@ extension Hash.Table.Static where Element: ~Copyable {
         return true
     }
 
+    /// Updates position for an element, passing a context value through
+    /// to the equality closure (internal helper for Property accessor).
+    @inlinable
+    @discardableResult
+    package mutating func updatePositionInternal<Context: ~Copyable>(
+        forHash hashValue: Hash.Value,
+        context: borrowing Context,
+        equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool,
+        newPosition: Index<Element>.Bounded<bucketCapacity>
+    ) -> Bool {
+        guard let bucket = bucketIndex(forHash: hashValue, context: context, equals: equals) else {
+            return false
+        }
+        writePosition(at: bucket, value: newPosition)
+        return true
+    }
+
     /// Updates position at a specific bucket index (internal helper for Property accessor).
     @inlinable
     package mutating func updatePositionInternal(atBucket bucket: Bucket.Index, newPosition: Index<Element>.Bounded<bucketCapacity>) {

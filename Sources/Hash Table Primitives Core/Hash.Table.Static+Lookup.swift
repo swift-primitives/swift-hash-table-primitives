@@ -135,6 +135,67 @@ extension Hash.Table.Static where Element: ~Copyable {
         return nil
     }
 
+    /// Finds the bucket index for an element with the given hash value,
+    /// passing a context value through to the equality closure.
+    ///
+    /// This overload avoids capturing the search element in the closure,
+    /// which is required when the element is `borrowing` and `~Copyable`.
+    ///
+    /// - Parameters:
+    ///   - hashValue: The hash value of the element to find.
+    ///   - context: A value passed through to `equals` on each probe.
+    ///   - equals: A closure that checks if the element at a given position
+    ///     matches the context.
+    /// - Returns: The bucket index if found, or `nil`.
+    @inlinable
+    public borrowing func bucketIndex<Context: ~Copyable>(
+        forHash hashValue: Hash.Value,
+        context: borrowing Context,
+        equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool
+    ) -> Bucket.Index? {
+        let hash = Self.normalize(hashValue)
+        var currentBucket = bucket(for: hash)
+        var probes = 0
+
+        while probes < bucketCapacity {
+            let storedHash = readHash(at: currentBucket)
+
+            if storedHash == Self.empty {
+                return nil
+            }
+
+            if storedHash == hash {
+                let position = readPosition(at: currentBucket)
+                if equals(position, context) {
+                    return currentBucket
+                }
+            }
+
+            currentBucket = bucket(after: currentBucket)
+            probes += 1
+        }
+
+        return nil
+    }
+
+    /// Checks whether an element with the given hash value exists,
+    /// passing a context value through to the equality closure.
+    ///
+    /// - Parameters:
+    ///   - hashValue: The hash value of the element to check.
+    ///   - context: A value passed through to `equals` on each probe.
+    ///   - equals: A closure that checks if the element at a given position
+    ///     matches the context.
+    /// - Returns: `true` if the element exists, `false` otherwise.
+    @inlinable
+    public borrowing func contains<Context: ~Copyable>(
+        hashValue: Hash.Value,
+        context: borrowing Context,
+        equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool
+    ) -> Bool {
+        position(forHash: hashValue, context: context, equals: equals) != nil
+    }
+
     /// Checks whether an element with the given hash value exists.
     ///
     /// - Parameters:

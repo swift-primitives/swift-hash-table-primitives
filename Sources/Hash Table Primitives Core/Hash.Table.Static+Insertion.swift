@@ -83,6 +83,77 @@ extension Hash.Table.Static where Element: ~Copyable {
         return false
     }
 
+    /// Inserts an element's bounded position into the hash table,
+    /// passing a context value through to the equality closure.
+    ///
+    /// This overload avoids capturing the search element in the closure,
+    /// which is required when the element is `borrowing` and `~Copyable`.
+    ///
+    /// - Parameters:
+    ///   - position: The bounded position in external storage.
+    ///   - hashValue: The hash value of the element.
+    ///   - context: A value passed through to `equals` on each probe.
+    ///   - equals: A closure that checks if the element at a given position
+    ///     matches the context. Used to detect duplicates.
+    /// - Returns: `true` if inserted, `false` if duplicate found or table is full.
+    ///
+    /// - Complexity: O(1) average, O(n) worst case.
+    @inlinable
+    @discardableResult
+    public mutating func insert<Context: ~Copyable>(
+        position: Index<Element>.Bounded<bucketCapacity>,
+        hashValue: Hash.Value,
+        context: borrowing Context,
+        equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool
+    ) -> Bool {
+        if isFull {
+            return false
+        }
+
+        let hash = Self.normalize(hashValue)
+        var currentBucket = bucket(for: hash)
+        var firstDeleted: Bucket.Index? = nil
+        var probes = 0
+
+        while probes < bucketCapacity {
+            let storedHash = readHash(at: currentBucket)
+
+            if storedHash == Self.empty {
+                let insertBucket = firstDeleted ?? currentBucket
+                writeHash(at: insertBucket, value: hash)
+                writePosition(at: insertBucket, value: position)
+                _count = _count + .one
+                if firstDeleted == nil {
+                    _occupied = _occupied + .one
+                }
+                return true
+            }
+
+            if storedHash == Self.deleted {
+                if firstDeleted == nil {
+                    firstDeleted = currentBucket
+                }
+            } else if storedHash == hash {
+                let existingPosition = readPosition(at: currentBucket)
+                if equals(existingPosition, context) {
+                    return false
+                }
+            }
+
+            currentBucket = bucket(after: currentBucket)
+            probes += 1
+        }
+
+        if let insertBucket = firstDeleted {
+            writeHash(at: insertBucket, value: hash)
+            writePosition(at: insertBucket, value: position)
+            _count = _count + .one
+            return true
+        }
+
+        return false
+    }
+
     /// Inserts without checking for duplicates.
     ///
     /// Use when you know the element is not already in the table.

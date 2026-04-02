@@ -62,6 +62,28 @@ where Tag == Hash.Table<Element>.Positions,
         )
     }
 
+    /// Updates the position for an element with the given hash value,
+    /// passing a context value through to the equality closure.
+    ///
+    /// - Parameters:
+    ///   - hashValue: The hash value of the element to update.
+    ///   - context: A value passed through to `equals` on each probe.
+    ///   - equals: A closure that checks if the element at a given position matches the context.
+    ///   - newPosition: The new bounded position for the element.
+    /// - Returns: `true` if the position was updated, `false` if element not found.
+    @inlinable
+    @discardableResult
+    public mutating func update<Context: ~Copyable>(
+        forHash hashValue: Hash.Value,
+        context: borrowing Context,
+        equals: (Index<Element>.Bounded<n>, borrowing Context) -> Bool,
+        newPosition: Index<Element>.Bounded<n>
+    ) -> Bool {
+        unsafe base.pointee.updatePositionInternal(
+            forHash: hashValue, context: context, equals: equals, newPosition: newPosition
+        )
+    }
+
     /// Updates the position at a specific bucket index.
     ///
     /// - Parameters:
