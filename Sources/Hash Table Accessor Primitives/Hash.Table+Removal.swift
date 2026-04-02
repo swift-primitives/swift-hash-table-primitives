@@ -41,6 +41,56 @@ extension Hash.Table where Element: ~Copyable {
         return position
     }
 
+    /// Removes an element from the hash table, passing a context value
+    /// through to the equality closure instead of capturing it.
+    ///
+    /// This overload avoids capturing the search element in the closure,
+    /// which is required when the element is `borrowing` and `~Copyable`.
+    ///
+    /// - Parameters:
+    ///   - hashValue: The hash value of the element to remove.
+    ///   - context: A value passed through to `equals` on each probe.
+    ///   - equals: A closure that checks if the element at a given position
+    ///     matches the context.
+    /// - Returns: The typed position that was removed, or `nil` if not found.
+    @inlinable
+    @discardableResult
+    public mutating func remove<Context: ~Copyable>(
+        hashValue: Hash.Value,
+        context: borrowing Context,
+        equals: (Index<Element>, borrowing Context) -> Bool
+    ) -> Index<Element>? {
+        let hash = Self.normalize(hashValue)
+        let capacity = bucketCapacity
+        var currentBucket = Bucket.Index(
+            __unchecked: (),
+            Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
+        )
+        var probes: Index<Bucket>.Count = .zero
+
+        while probes < capacity {
+            let storedHash = self[hash: currentBucket]
+
+            if storedHash == Self.empty {
+                return nil
+            }
+
+            if storedHash == hash {
+                let position = self[position: currentBucket]
+                if equals(position, context) {
+                    self[hash: currentBucket] = Self.deleted
+                    _count = _count.subtract.saturating(.one)
+                    return position
+                }
+            }
+
+            currentBucket = Bucket.Index.Modular.successor(of: currentBucket, capacity: capacity)
+            probes += .one
+        }
+
+        return nil
+    }
+
     /// Removes the element at a specific bucket.
     ///
     /// - Parameter bucket: The bucket index to remove.

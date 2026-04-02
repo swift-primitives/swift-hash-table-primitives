@@ -38,6 +38,54 @@ extension Hash.Table.Static where Element: ~Copyable {
         return position
     }
 
+    /// Removes an element from the hash table, passing a context value
+    /// through to the equality closure instead of capturing it.
+    ///
+    /// This overload avoids capturing the search element in the closure,
+    /// which is required when the element is `borrowing` and `~Copyable`.
+    ///
+    /// - Parameters:
+    ///   - hashValue: The hash value of the element to remove.
+    ///   - context: A value passed through to `equals` on each probe.
+    ///   - equals: A closure that checks if the element at a given position
+    ///     matches the context.
+    /// - Returns: The bounded position that was removed, or `nil` if not found.
+    ///
+    /// - Complexity: O(1) average, O(n) worst case.
+    @inlinable
+    @discardableResult
+    public mutating func remove<Context: ~Copyable>(
+        hashValue: Hash.Value,
+        context: borrowing Context,
+        equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool
+    ) -> Index<Element>.Bounded<bucketCapacity>? {
+        let hash = Self.normalize(hashValue)
+        var currentBucket = bucket(for: hash)
+        var probes = 0
+
+        while probes < bucketCapacity {
+            let storedHash = readHash(at: currentBucket)
+
+            if storedHash == Self.empty {
+                return nil
+            }
+
+            if storedHash == hash {
+                let position = readPosition(at: currentBucket)
+                if equals(position, context) {
+                    writeHash(at: currentBucket, value: Self.deleted)
+                    _count = _count.subtract.saturating(.one)
+                    return position
+                }
+            }
+
+            currentBucket = bucket(after: currentBucket)
+            probes += 1
+        }
+
+        return nil
+    }
+
     /// Removes the element at a specific bucket index.
     ///
     /// - Parameter bucket: The bucket index to remove.
