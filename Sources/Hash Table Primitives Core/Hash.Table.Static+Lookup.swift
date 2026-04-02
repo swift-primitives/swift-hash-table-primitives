@@ -68,7 +68,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///
     /// - Complexity: O(1) average, O(n) worst case.
     @inlinable
-    public borrowing func position<Context: ~Copyable>(
+    package borrowing func position<Context: ~Copyable>(
         forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool
@@ -148,7 +148,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///     matches the context.
     /// - Returns: The bucket index if found, or `nil`.
     @inlinable
-    public borrowing func bucketIndex<Context: ~Copyable>(
+    package borrowing func bucketIndex<Context: ~Copyable>(
         forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool
@@ -188,7 +188,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///     matches the context.
     /// - Returns: `true` if the element exists, `false` otherwise.
     @inlinable
-    public borrowing func contains<Context: ~Copyable>(
+    package borrowing func contains<Context: ~Copyable>(
         hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool

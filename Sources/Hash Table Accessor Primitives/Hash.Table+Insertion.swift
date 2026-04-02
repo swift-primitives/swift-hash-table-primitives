@@ -93,7 +93,7 @@ extension Hash.Table where Element: ~Copyable {
     /// - Returns: `true` if inserted, `false` if duplicate found.
     @inlinable
     @discardableResult
-    public mutating func insert<Context: ~Copyable>(
+    package mutating func insert<Context: ~Copyable>(
         position: Index<Element>,
         hashValue: Hash.Value,
         context: borrowing Context,

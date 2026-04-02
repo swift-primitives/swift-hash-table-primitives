@@ -100,7 +100,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Complexity: O(1) average, O(n) worst case.
     @inlinable
     @discardableResult
-    public mutating func insert<Context: ~Copyable>(
+    package mutating func insert<Context: ~Copyable>(
         position: Index<Element>.Bounded<bucketCapacity>,
         hashValue: Hash.Value,
         context: borrowing Context,

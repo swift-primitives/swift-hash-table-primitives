@@ -55,7 +55,7 @@ extension Hash.Table where Element: ~Copyable {
     /// - Returns: The typed position that was removed, or `nil` if not found.
     @inlinable
     @discardableResult
-    public mutating func remove<Context: ~Copyable>(
+    package mutating func remove<Context: ~Copyable>(
         hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>, borrowing Context) -> Bool

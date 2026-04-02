@@ -73,7 +73,7 @@ where Tag == Hash.Table<Element>.Positions,
     /// - Returns: `true` if the position was updated, `false` if element not found.
     @inlinable
     @discardableResult
-    public mutating func update<Context: ~Copyable>(
+    package mutating func update<Context: ~Copyable>(
         forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>.Bounded<n>, borrowing Context) -> Bool,
