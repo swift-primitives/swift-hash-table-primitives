@@ -338,7 +338,7 @@ For each file in `hash-table-primitives`, classify every public API member as:
 | Item | Classification | Rationale |
 |------|---------------|-----------|
 | `func position(forHash:equals:)` | **HASH TABLE** | Hash-first, equality-second lookup with linear probing |
-| `func bucketIndex(forHash:equals:)` | **HASH TABLE** | Same but returns bucket index |
+| `func index(forHash:equals:)` | **HASH TABLE** | Same but returns bucket index |
 | `func contains(hashValue:equals:)` | **HASH TABLE** | Membership test delegating to `position(forHash:equals:)` |
 
 #### `Hash.Table.Static+Insertion.swift` -- Static Insertion
@@ -391,7 +391,7 @@ For each file in `hash-table-primitives`, classify every public API member as:
 | Item | Classification | Rationale |
 |------|---------------|-----------|
 | `func position(forHash:equals:)` | **HASH TABLE** | Hash-first lookup with linear probing via buffer subscripts |
-| `func bucketIndex(forHash:equals:)` | **HASH TABLE** | Same, returns bucket index |
+| `func index(forHash:equals:)` | **HASH TABLE** | Same, returns bucket index |
 
 #### `Hash.Table+Properties.swift` -- Heap Properties
 

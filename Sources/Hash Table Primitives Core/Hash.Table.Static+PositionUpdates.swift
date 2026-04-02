@@ -36,10 +36,10 @@ extension Hash.Table.Static where Element: ~Copyable {
         equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool,
         newPosition: Index<Element>.Bounded<bucketCapacity>
     ) -> Bool {
-        guard let bucket = bucketIndex(forHash: hashValue, equals: equals) else {
+        guard let index = index(forHash: hashValue, equals: equals) else {
             return false
         }
-        writePosition(at: bucket, value: newPosition)
+        writePosition(at: index, value: newPosition)
         return true
     }
 
@@ -47,16 +47,16 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// to the equality closure (internal helper for Property accessor).
     @inlinable
     @discardableResult
-    public mutating func updatePositionInternal<Context: ~Copyable>(
+    package mutating func updatePositionInternal<Context: ~Copyable>(
         forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool,
         newPosition: Index<Element>.Bounded<bucketCapacity>
     ) -> Bool {
-        guard let bucket = bucketIndex(forHash: hashValue, context: context, equals: equals) else {
+        guard let index = index(forHash: hashValue, context: context, equals: equals) else {
             return false
         }
-        writePosition(at: bucket, value: newPosition)
+        writePosition(at: index, value: newPosition)
         return true
     }
 

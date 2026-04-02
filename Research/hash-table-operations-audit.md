@@ -53,7 +53,7 @@ Two variants exist:
 | insert(k, v) | `mutating func insert(position:hashValue:equals:) -> Bool` | O(1) avg, O(n) worst | `Hash.Table+Insertion.swift` (L15-79) |
 | insert(k, v) unchecked | `mutating func insert(__unchecked:position:hashValue:)` | O(1) avg, O(n) worst | `Hash.Table+Insertion.swift` (L81-117) |
 | lookup(k) | `borrowing func position(forHash:equals:) -> Index<Element>?` | O(1) avg, O(n) worst | `Hash.Table+Lookup.swift` (L14-54) |
-| lookup(k) bucket | `borrowing func bucketIndex(forHash:equals:) -> BucketIndex?` | O(1) avg, O(n) worst | `Hash.Table+Lookup.swift` (L56-96) |
+| lookup(k) bucket | `borrowing func index(forHash:equals:) -> BucketIndex?` | O(1) avg, O(n) worst | `Hash.Table+Lookup.swift` (L56-96) |
 | delete(k) | `mutating func remove(hashValue:equals:) -> Index<Element>?` | O(1) avg, O(n) worst | `Hash.Table+Removal.swift` (L20-42) |
 | delete(k) at bucket | `mutating func remove(at:)` | O(1) | `Hash.Table+Removal.swift` (L44-55) |
 | delete all | `remove.all(keepingCapacity:)` | O(n) | `Hash.Table+Removal.swift` (L71-93) |
@@ -75,7 +75,7 @@ Two variants exist:
 | insert(k, v) | `mutating func insert(position:hashValue:equals:) -> Bool` | O(1) avg, O(n) worst | `Hash.Table.Static+Insertion.swift` (L12-84) |
 | insert(k, v) unchecked | `mutating func insert(__unchecked:position:hashValue:) -> Bool` | O(1) avg, O(n) worst | `Hash.Table.Static+Insertion.swift` (L86-130) |
 | lookup(k) | `borrowing func position(forHash:equals:) -> Index<Element>.Bounded<N>?` | O(1) avg, O(n) worst | `Hash.Table.Static+Lookup.swift` (L12-53) |
-| lookup(k) bucket | `borrowing func bucketIndex(forHash:equals:) -> BucketIndex?` | O(1) avg, O(n) worst | `Hash.Table.Static+Lookup.swift` (L55-90) |
+| lookup(k) bucket | `borrowing func index(forHash:equals:) -> BucketIndex?` | O(1) avg, O(n) worst | `Hash.Table.Static+Lookup.swift` (L55-90) |
 | contains(k) | `borrowing func contains(hashValue:equals:) -> Bool` | O(1) avg, O(n) worst | `Hash.Table.Static+Lookup.swift` (L92-106) |
 | delete(k) | `mutating func remove(hashValue:equals:) -> Index<Element>.Bounded<N>?` | O(1) avg, O(n) worst | `Hash.Table.Static+Removal.swift` (L12-39) |
 | delete(k) at bucket | `mutating func remove(atBucket:) -> Index<Element>.Bounded<N>` | O(1) | `Hash.Table.Static+Removal.swift` (L41-58) |
@@ -166,7 +166,7 @@ These operations are specific to `Hash.Table`'s role as an index structure that 
 | insert(k, v) | `insert(position:hashValue:equals:)` | `insert(position:hashValue:equals:)` |
 | insert unchecked | `insert(__unchecked:position:hashValue:)` | `insert(__unchecked:position:hashValue:)` |
 | lookup(k) | `position(forHash:equals:)` | `position(forHash:equals:)` |
-| lookup(k) bucket | `bucketIndex(forHash:equals:)` | `bucketIndex(forHash:equals:)` |
+| lookup(k) bucket | `index(forHash:equals:)` | `index(forHash:equals:)` |
 | delete(k) | `remove(hashValue:equals:)` | `remove(hashValue:equals:)` |
 | delete at bucket | `remove(at:)` | `remove(atBucket:)` |
 | delete all | `remove.all(keepingCapacity:)` | `remove.all()` / `clearAll()` |

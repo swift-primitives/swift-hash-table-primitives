@@ -31,12 +31,12 @@ extension Hash.Table where Element: ~Copyable {
         hashValue: Hash.Value,
         equals: (Index<Element>) -> Bool
     ) -> Index<Element>? {
-        guard let bucketIdx = bucketIndex(forHash: hashValue, equals: equals) else {
+        guard let index = index(forHash: hashValue, equals: equals) else {
             return nil
         }
 
-        let position = self[position: bucketIdx]
-        self[hash: bucketIdx] = Self.deleted
+        let position = self[position: index]
+        self[hash: index] = Self.deleted
         _count = _count.subtract.saturating(.one)
         return position
     }

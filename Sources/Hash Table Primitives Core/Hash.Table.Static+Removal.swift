@@ -27,12 +27,12 @@ extension Hash.Table.Static where Element: ~Copyable {
         hashValue: Hash.Value,
         equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool
     ) -> Index<Element>.Bounded<bucketCapacity>? {
-        guard let bucket = bucketIndex(forHash: hashValue, equals: equals) else {
+        guard let index = index(forHash: hashValue, equals: equals) else {
             return nil
         }
 
-        let position = readPosition(at: bucket)
-        writeHash(at: bucket, value: Self.deleted)
+        let position = readPosition(at: index)
+        writeHash(at: index, value: Self.deleted)
         _count = _count.subtract.saturating(.one)
         // Note: _occupied does not decrease - tombstones still count as occupied
         return position
@@ -94,7 +94,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Precondition: The bucket must contain a valid element (not empty or deleted).
     @inlinable
     @discardableResult
-    public mutating func remove(atBucket bucket: Bucket.Index) -> Index<Element>.Bounded<bucketCapacity> {
+    public mutating func remove(at bucket: Bucket.Index) -> Index<Element>.Bounded<bucketCapacity> {
         precondition(
             readHash(at: bucket) != Self.empty && readHash(at: bucket) != Self.deleted,
             "Cannot remove from empty or deleted bucket"

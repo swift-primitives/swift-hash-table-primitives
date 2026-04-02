@@ -28,13 +28,13 @@ extension Hash.Table.Static where Element: ~Copyable {
         Bucket.Index.Count(Cardinal(UInt(bucketCapacity)))
     }
 
-    /// Whether the hash table should grow (is at or above 70% load factor).
+    /// Whether the hash table is at or above 70% load factor.
     ///
     /// Since inline hash tables cannot grow, this indicates when the table
     /// is too full for efficient operations. Use this to detect when to
     /// spill to heap storage in small-buffer optimization patterns.
     @inlinable
-    public var shouldGrow: Bool {
+    package var shouldGrow: Bool {
         // Grow when occupied exceeds 70% of capacity
         typealias Scale = Affine.Discrete.Ratio<Bucket, Bucket>
         return _occupied * Scale(10) >= capacity * Scale(7)

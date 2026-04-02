@@ -290,8 +290,8 @@ struct HashTableInlineTests {
         let notFound = table.position(forHash: 99, equals: { _ in false })
         #expect(notFound == nil)
 
-        // bucketIndex must also terminate
-        let noBucket = table.bucketIndex(forHash: 99, equals: { _ in false })
+        // index must also terminate
+        let noBucket = table.index(forHash: 99, equals: { _ in false })
         #expect(noBucket == nil)
 
         // contains must also terminate

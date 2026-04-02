@@ -106,7 +106,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///     matches the search element.
     /// - Returns: The bucket index if found, or `nil`.
     @inlinable
-    public borrowing func bucketIndex(
+    public borrowing func index(
         forHash hashValue: Hash.Value,
         equals: (Index<Element>.Bounded<bucketCapacity>) -> Bool
     ) -> Bucket.Index? {
@@ -148,7 +148,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     ///     matches the context.
     /// - Returns: The bucket index if found, or `nil`.
     @inlinable
-    public borrowing func bucketIndex<Context: ~Copyable>(
+    public borrowing func index<Context: ~Copyable>(
         forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool

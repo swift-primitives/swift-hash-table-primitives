@@ -450,7 +450,7 @@ swift-hash-table-primitives/Sources/
 **Files created**:
 - `Hash.Table.swift` — type definition added as nested struct
 - `Hash.Table.Static+Properties.swift` — count, isEmpty, capacity, shouldGrow, isFull
-- `Hash.Table.Static+Lookup.swift` — position, bucketIndex, contains
+- `Hash.Table.Static+Lookup.swift` — position, index, contains
 - `Hash.Table.Static+Insertion.swift` — insert, insert(__unchecked:)
 - `Hash.Table.Static+Removal.swift` — remove, removeAll, rehash
 - `Hash.Table.Static+PositionUpdates.swift` — decrementPositions, updatePosition

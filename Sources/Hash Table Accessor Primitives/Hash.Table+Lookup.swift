@@ -101,6 +101,47 @@ extension Hash.Table where Element: ~Copyable {
         return nil
     }
 
+    /// Finds the bucket index for an element with the given hash value.
+    ///
+    /// - Parameters:
+    ///   - hashValue: The hash value of the element to find.
+    ///   - equals: A closure that checks if the element at a given position
+    ///     matches the search element.
+    /// - Returns: The bucket index if found, or `nil`.
+    @inlinable
+    public borrowing func index(
+        forHash hashValue: Hash.Value,
+        equals: (Index<Element>) -> Bool
+    ) -> Bucket.Index? {
+        let hash = Self.normalize(hashValue)
+        let capacity = bucketCapacity
+        var currentBucket = Bucket.Index(
+            __unchecked: (),
+            Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
+        )
+        var probes: Index<Bucket>.Count = .zero
+
+        while probes < capacity {
+            let storedHash = self[hash: currentBucket]
+
+            if storedHash == Self.empty {
+                return nil
+            }
+
+            if storedHash == hash {
+                let position = self[position: currentBucket]
+                if equals(position) {
+                    return currentBucket
+                }
+            }
+
+            currentBucket = Bucket.Index.Modular.successor(of: currentBucket, capacity: capacity)
+            probes += .one
+        }
+
+        return nil
+    }
+
     /// Finds the bucket index for an element with the given hash value,
     /// passing a context value through to the equality closure.
     ///
@@ -114,7 +155,7 @@ extension Hash.Table where Element: ~Copyable {
     ///     matches the context.
     /// - Returns: The bucket index if found, or `nil`.
     @inlinable
-    public borrowing func bucketIndex<Context: ~Copyable>(
+    public borrowing func index<Context: ~Copyable>(
         forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>, borrowing Context) -> Bool
@@ -137,47 +178,6 @@ extension Hash.Table where Element: ~Copyable {
             if storedHash == hash {
                 let position = self[position: currentBucket]
                 if equals(position, context) {
-                    return currentBucket
-                }
-            }
-
-            currentBucket = Bucket.Index.Modular.successor(of: currentBucket, capacity: capacity)
-            probes += .one
-        }
-
-        return nil
-    }
-
-    /// Finds the bucket index for an element with the given hash value.
-    ///
-    /// - Parameters:
-    ///   - hashValue: The hash value of the element to find.
-    ///   - equals: A closure that checks if the element at a given position
-    ///     matches the search element.
-    /// - Returns: The bucket index if found, or `nil`.
-    @inlinable
-    public borrowing func bucketIndex(
-        forHash hashValue: Hash.Value,
-        equals: (Index<Element>) -> Bool
-    ) -> Bucket.Index? {
-        let hash = Self.normalize(hashValue)
-        let capacity = bucketCapacity
-        var currentBucket = Bucket.Index(
-            __unchecked: (),
-            Ordinal(UInt(bitPattern: hash)) % capacity.rawValue
-        )
-        var probes: Index<Bucket>.Count = .zero
-
-        while probes < capacity {
-            let storedHash = self[hash: currentBucket]
-
-            if storedHash == Self.empty {
-                return nil
-            }
-
-            if storedHash == hash {
-                let position = self[position: currentBucket]
-                if equals(position) {
                     return currentBucket
                 }
             }
