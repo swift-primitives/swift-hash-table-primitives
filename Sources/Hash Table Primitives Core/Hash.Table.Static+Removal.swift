@@ -54,7 +54,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Complexity: O(1) average, O(n) worst case.
     @inlinable
     @discardableResult
-    package mutating func remove<Context: ~Copyable>(
+    public mutating func remove<Context: ~Copyable>(
         hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool

@@ -67,7 +67,7 @@ extension Hash.Table where Element: ~Copyable {
     ///     matches the context. Called for hash collisions.
     /// - Returns: The typed position in external storage if found, or `nil`.
     @inlinable
-    package borrowing func position<Context: ~Copyable>(
+    public borrowing func position<Context: ~Copyable>(
         forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>, borrowing Context) -> Bool
@@ -114,7 +114,7 @@ extension Hash.Table where Element: ~Copyable {
     ///     matches the context.
     /// - Returns: The bucket index if found, or `nil`.
     @inlinable
-    package borrowing func bucketIndex<Context: ~Copyable>(
+    public borrowing func bucketIndex<Context: ~Copyable>(
         forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>, borrowing Context) -> Bool

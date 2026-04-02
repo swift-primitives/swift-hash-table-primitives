@@ -47,7 +47,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// to the equality closure (internal helper for Property accessor).
     @inlinable
     @discardableResult
-    package mutating func updatePositionInternal<Context: ~Copyable>(
+    public mutating func updatePositionInternal<Context: ~Copyable>(
         forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool,
