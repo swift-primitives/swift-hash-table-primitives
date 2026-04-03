@@ -21,6 +21,10 @@ let package = Package(
             targets: ["Hash Table Primitives Core"]
         ),
         .library(
+            name: "Hash Table Accessor Primitives",
+            targets: ["Hash Table Accessor Primitives"]
+        ),
+        .library(
             name: "Hash Table Primitives Test Support",
             targets: ["Hash Table Primitives Test Support"]
         ),
