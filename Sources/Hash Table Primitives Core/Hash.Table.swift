@@ -77,11 +77,11 @@ extension Hash {
 
         /// Sentinel value indicating an empty bucket.
         @inlinable
-        public static var empty: Int { 0 }
+        package static var empty: Int { 0 }
 
         /// Sentinel value indicating a deleted bucket.
         @inlinable
-        public static var deleted: Int { Int.min }
+        package static var deleted: Int { Int.min }
 
         // MARK: - Canonical Initializer
 
@@ -109,7 +109,7 @@ extension Hash {
         /// Uses power-of-two sizing for fast modulo via bitmasking.
         /// Targets ~70% load factor.
         @inlinable
-        public static func bucketCapacity(for minimumCapacity: Index<Element>.Count) -> Index<Bucket>.Count {
+        package static func bucketCapacity(for minimumCapacity: Index<Element>.Count) -> Index<Bucket>.Count {
             let minCap = Int(bitPattern: minimumCapacity)
             guard minCap > 0 else {
                 return Index<Bucket>.Count(Cardinal(8))
@@ -126,7 +126,7 @@ extension Hash {
         /// Maps `0` to `1` (since `0` is the empty sentinel).
         /// Maps `Int.min` to `1` (since `Int.min` is the deleted sentinel).
         @inlinable
-        public static func normalize(_ hashValue: Hash.Value) -> Int {
+        package static func normalize(_ hashValue: Hash.Value) -> Int {
             let raw = hashValue.rawValue
             let hash = raw == 0 ? 1 : raw
             return hash == Int.min ? 1 : hash

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Sequence_Primitives_Core
+import Sequence_Primitives
 
 // MARK: - Sequence.Protocol
 

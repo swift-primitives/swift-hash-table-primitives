@@ -104,6 +104,46 @@ extension Hash.Table where Element: ~Copyable {
         _count = _count.subtract.saturating(.one)
     }
 
+    /// Rehashes the table, removing tombstones without changing capacity.
+    ///
+    /// Call this after many deletions to reclaim tombstone slots and
+    /// improve probe chain performance.
+    ///
+    /// - Complexity: O(n) where n is bucket capacity.
+    @inlinable
+    public mutating func rehash() {
+        let capacity = bucketCapacity
+        var newBuffer = Buffer<Int>.Slots<Int>(
+            capacity: capacity.retag(Int.self),
+            metadataInitial: Self.empty
+        )
+        newBuffer.fill(payload: 0)
+
+        var currentBucket: Bucket.Index = .zero
+        var remaining = _count
+        while currentBucket < capacity, remaining != .zero {
+            let hash = self[hash: currentBucket]
+            if hash != Self.empty && hash != Self.deleted {
+                let position = self[position: currentBucket]
+                var targetBucket = Self.bucket(for: hash, capacity: capacity)
+
+                var probes: Index<Bucket>.Count = .zero
+                while newBuffer[metadata: targetBucket.retag(Int.self)] != Self.empty && probes < capacity {
+                    targetBucket = Bucket.Index.Modular.successor(of: targetBucket, capacity: capacity)
+                    probes += .one
+                }
+
+                newBuffer[metadata: targetBucket.retag(Int.self)] = hash
+                newBuffer[payload: targetBucket.retag(Int.self)] = Int(bitPattern: position)
+                remaining = remaining.subtract.saturating(.one)
+            }
+            currentBucket += .one
+        }
+
+        _occupied = _count.retag(Bucket.self)
+        _buffer = newBuffer
+    }
+
     /// Access remove operations.
     @inlinable
     public var remove: Remove.View {

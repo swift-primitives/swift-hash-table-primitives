@@ -44,15 +44,15 @@ extension Hash.Table where Element: ~Copyable {
 
         /// Sentinel value indicating an empty bucket.
         @inlinable
-        public static var empty: Int { Hash.Table<Element>.empty }
+        package static var empty: Int { Hash.Table<Element>.empty }
 
         /// Sentinel value indicating a deleted bucket (tombstone).
         @inlinable
-        public static var deleted: Int { Hash.Table<Element>.deleted }
+        package static var deleted: Int { Hash.Table<Element>.deleted }
 
         /// Normalizes a hash value to avoid sentinel collisions.
         @inlinable
-        public static func normalize(_ hashValue: Hash.Value) -> Int {
+        package static func normalize(_ hashValue: Hash.Value) -> Int {
             Hash.Table<Element>.normalize(hashValue)
         }
 

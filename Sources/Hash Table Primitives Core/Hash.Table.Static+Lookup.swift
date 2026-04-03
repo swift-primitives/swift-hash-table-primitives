@@ -189,7 +189,7 @@ extension Hash.Table.Static where Element: ~Copyable {
     /// - Returns: `true` if the element exists, `false` otherwise.
     @inlinable
     public borrowing func contains<Context: ~Copyable>(
-        hashValue: Hash.Value,
+        forHash hashValue: Hash.Value,
         context: borrowing Context,
         equals: (Index<Element>.Bounded<bucketCapacity>, borrowing Context) -> Bool
     ) -> Bool {

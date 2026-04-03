@@ -188,4 +188,37 @@ extension Hash.Table where Element: ~Copyable {
 
         return nil
     }
+
+    /// Checks whether an element with the given hash value exists.
+    ///
+    /// - Parameters:
+    ///   - hashValue: The hash value of the element to check.
+    ///   - equals: A closure that checks if the element at a given position
+    ///     matches the search element.
+    /// - Returns: `true` if the element exists, `false` otherwise.
+    @inlinable
+    public borrowing func contains(
+        hashValue: Hash.Value,
+        equals: (Index<Element>) -> Bool
+    ) -> Bool {
+        position(forHash: hashValue, equals: equals) != nil
+    }
+
+    /// Checks whether an element with the given hash value exists,
+    /// passing a context value through to the equality closure.
+    ///
+    /// - Parameters:
+    ///   - hashValue: The hash value of the element to check.
+    ///   - context: A value passed through to `equals` on each probe.
+    ///   - equals: A closure that checks if the element at a given position
+    ///     matches the context.
+    /// - Returns: `true` if the element exists, `false` otherwise.
+    @inlinable
+    public borrowing func contains<Context: ~Copyable>(
+        forHash hashValue: Hash.Value,
+        context: borrowing Context,
+        equals: (Index<Element>, borrowing Context) -> Bool
+    ) -> Bool {
+        position(forHash: hashValue, context: context, equals: equals) != nil
+    }
 }
