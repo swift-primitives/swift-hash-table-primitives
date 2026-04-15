@@ -161,4 +161,14 @@ extension Hash.Table where Element: ~Copyable {
 // MARK: - Conditional Conformances
 
 extension Hash.Table.Static: Copyable where Element: Copyable {}
+// WHY: Category D — structural Sendable workaround (SP-3).
+// WHY: `Hash.Table.Static` stores only `InlineArray<bucketCapacity, Int>` fields
+// WHY: and typed counts — all pure inline value bytes with no heap allocation.
+// WHY: The `~Copyable` trait is inherited from the parent extension scope, not
+// WHY: from owning a resource. The `<let bucketCapacity: Int>` value-generic and
+// WHY: phantom `Element: ~Copyable` parameter both block structural Sendable
+// WHY: inference. No caller invariant to uphold.
+// WHEN TO REMOVE: When compiler gains structural Sendable inference through
+// WHEN TO REMOVE: value-generic parameters and phantom type parameters.
+// TRACKING: unsafe-audit-findings.md Category D SP-3.
 extension Hash.Table.Static: @unchecked Sendable where Element: Sendable {}

@@ -138,4 +138,25 @@ extension Hash {
 // MARK: - Conditional Conformances
 
 extension Hash.Table: Copyable where Element: Copyable {}
-extension Hash.Table: @unchecked Sendable where Element: Sendable {}
+/// Sendable conformance for `Hash.Table`.
+///
+/// ## Safety Invariant
+///
+/// `Hash.Table` is `~Copyable` and owns a heap-allocated `Buffer.Slots`
+/// backing store. Single ownership is enforced by the type system; cross-thread
+/// transfer via move relinquishes the sender's access, preventing data races
+/// by construction.
+///
+/// ## Intended Use
+///
+/// - Transferring a prepared hash table to a worker thread.
+/// - Handing off a hash table across actors as a one-shot ownership transfer.
+/// - Actor-owned hash tables constructed outside the actor and passed in at init.
+///
+/// ## Non-Goals
+///
+/// - Does not support concurrent access from multiple threads.
+/// - Ownership is single-owner; transfer is one-shot via `consuming` parameter.
+/// - This conformance does not make arbitrary sharing safe — `~Copyable`
+///   prevents aliasing at compile time.
+extension Hash.Table: @unsafe @unchecked Sendable where Element: Sendable {}

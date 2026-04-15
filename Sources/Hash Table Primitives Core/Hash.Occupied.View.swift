@@ -14,7 +14,30 @@ extension Hash.Occupied where Source: Copyable {
     ///
     /// Captures hash and position pointers without requiring exclusive access,
     /// enabling iteration from non-mutating contexts.
-    @unsafe public struct View: Copyable, @unchecked Sendable {
+    ///
+    /// ## Safety Invariant
+    ///
+    /// `Hash.Occupied.View` holds raw `UnsafePointer<Int>` fields pointing into
+    /// a `Hash.Table`'s backing buffer. The pointers must outlive the view, and
+    /// the underlying `Hash.Table` must not be mutated or deallocated while the
+    /// view is live. The caller is responsible for ensuring these lifetime and
+    /// non-mutation invariants when sending the view across threads.
+    ///
+    /// ## Intended Use
+    ///
+    /// - Non-mutating iteration of occupied buckets from any context that holds
+    ///   the pointers live.
+    /// - Transferring an iteration snapshot to another thread for read-only
+    ///   processing while the source table is frozen.
+    ///
+    /// ## Non-Goals
+    ///
+    /// - Does not own the pointed-to memory — caller manages buffer lifetime.
+    /// - Does not synchronize access — concurrent mutation of the underlying
+    ///   `Hash.Table` during iteration is undefined behavior.
+    /// - The outer `@unsafe` on the struct already signals pointer-safety
+    ///   requirements; the Sendable conformance adds the cross-thread dimension.
+    @unsafe public struct View: Copyable, @unsafe @unchecked Sendable {
         @usableFromInline
         let _hashes: UnsafePointer<Int>
 
