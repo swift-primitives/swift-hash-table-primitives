@@ -19,16 +19,16 @@ struct TestElement {}
 @Suite("Hash.Table Tests")
 struct HashIndexTests {
 
-    @Test("Empty hash index")
-    func emptyHashIndex() {
+    @Test
+    func `Empty hash index`() {
         let index = Hash.Table<TestElement>()
         #expect(index.isEmpty == true)
         let expectedCount: Index<TestElement>.Count = 0
         #expect(index.count == expectedCount)
     }
 
-    @Test("Insert and lookup")
-    func insertAndLookup() throws {
+    @Test
+    func `Insert and lookup`() throws {
         var index = Hash.Table<TestElement>()
 
         // Insert position 0 with hash 42
@@ -47,8 +47,8 @@ struct HashIndexTests {
         #expect(notFound == nil)
     }
 
-    @Test("Duplicate rejection")
-    func duplicateRejection() throws {
+    @Test
+    func `Duplicate rejection`() throws {
         var index = Hash.Table<TestElement>()
 
         let position0: Index<TestElement> = 0
@@ -63,8 +63,8 @@ struct HashIndexTests {
         #expect(index.count == expectedCount)
     }
 
-    @Test("Removal")
-    func removal() throws {
+    @Test
+    func `Removal`() throws {
         var index = Hash.Table<TestElement>()
 
         let position0: Index<TestElement> = 0
@@ -88,8 +88,8 @@ struct HashIndexTests {
         #expect(stillThere == position1)
     }
 
-    @Test("Position decrement after removal")
-    func positionDecrementAfterRemoval() throws {
+    @Test
+    func `Position decrement after removal`() throws {
         var index = Hash.Table<TestElement>()
 
         // Insert positions 0, 1, 2
@@ -111,8 +111,8 @@ struct HashIndexTests {
         #expect(index.position(forHash: 30, equals: { $0 == position1 }) == position1)
     }
 
-    @Test("Growth under load")
-    func growthUnderLoad() throws {
+    @Test
+    func `Growth under load`() throws {
         let initialCapacity: Index<TestElement>.Count = 4
         var index = Hash.Table<TestElement>(minimumCapacity: initialCapacity)
         let initialBucketCapacity = index.capacity
@@ -136,8 +136,8 @@ struct HashIndexTests {
         }
     }
 
-    @Test("Remove all keeping capacity")
-    func removeAllKeepingCapacity() throws {
+    @Test
+    func `Remove all keeping capacity`() throws {
         var index = Hash.Table<TestElement>()
 
         for i in 0..<10 {
@@ -155,8 +155,8 @@ struct HashIndexTests {
         #expect(index.capacity == capacityBefore)
     }
 
-    @Test("Remove all releasing capacity")
-    func removeAllReleasingCapacity() throws {
+    @Test
+    func `Remove all releasing capacity`() throws {
         let initialCapacity: Index<TestElement>.Count = 100
         var index = Hash.Table<TestElement>(minimumCapacity: initialCapacity)
 
@@ -173,8 +173,8 @@ struct HashIndexTests {
         #expect(index.count == expectedCount)
     }
 
-    @Test("Hash collision handling")
-    func hashCollisionHandling() throws {
+    @Test
+    func `Hash collision handling`() throws {
         var index = Hash.Table<TestElement>()
 
         // Insert multiple elements with the same hash
@@ -194,8 +194,8 @@ struct HashIndexTests {
         #expect(index.position(forHash: 42, equals: { $0 == position2 }) == position2)
     }
 
-    @Test("Type safety - different element types are distinct")
-    func typeSafety() throws {
+    @Test
+    func `Type safety - different element types are distinct`() throws {
         // Hash.Table<TypeA> and Hash.Table<TypeB> are different types
         struct TypeA {}
         struct TypeB {}

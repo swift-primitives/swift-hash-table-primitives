@@ -19,8 +19,8 @@ private struct InlineTestElement {}
 @Suite("Hash.Table.Static Tests")
 struct HashTableInlineTests {
 
-    @Test("Empty inline hash table")
-    func emptyInlineHashTable() {
+    @Test
+    func `Empty inline hash table`() {
         let table = Hash.Table<InlineTestElement>.Static<16>()
         #expect(table.isEmpty == true)
         let expectedCount: Index<InlineTestElement>.Count = 0
@@ -29,8 +29,8 @@ struct HashTableInlineTests {
         #expect(table.isFull == false)
     }
 
-    @Test("Insert and lookup")
-    func insertAndLookup() throws {
+    @Test
+    func `Insert and lookup`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert position 0 with hash 42
@@ -49,8 +49,8 @@ struct HashTableInlineTests {
         #expect(notFound == nil)
     }
 
-    @Test("Duplicate rejection")
-    func duplicateRejection() throws {
+    @Test
+    func `Duplicate rejection`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position0: Index<InlineTestElement>.Bounded<16> = 0
@@ -65,8 +65,8 @@ struct HashTableInlineTests {
         #expect(table.count == expectedCount)
     }
 
-    @Test("Removal with tombstone")
-    func removalWithTombstone() throws {
+    @Test
+    func `Removal with tombstone`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position0: Index<InlineTestElement>.Bounded<16> = 0
@@ -90,8 +90,8 @@ struct HashTableInlineTests {
         #expect(stillThere == position1)
     }
 
-    @Test("Position decrement after removal")
-    func positionDecrementAfterRemoval() throws {
+    @Test
+    func `Position decrement after removal`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert positions 0, 1, 2
@@ -113,8 +113,8 @@ struct HashTableInlineTests {
         #expect(table.position(forHash: 30, equals: { $0 == position1 }) == position1)
     }
 
-    @Test("Capacity limits - cannot grow")
-    func capacityLimits() throws {
+    @Test
+    func `Capacity limits - cannot grow`() throws {
         var table = Hash.Table<InlineTestElement>.Static<8>()
         // 8 buckets at 70% → ~5 elements before shouldGrow
 
@@ -133,8 +133,8 @@ struct HashTableInlineTests {
         #expect(table.isFull == true || table.shouldGrow == true)
     }
 
-    @Test("Remove all")
-    func removeAll() throws {
+    @Test
+    func `Remove all`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         for i in 0..<10 {
@@ -152,8 +152,8 @@ struct HashTableInlineTests {
         #expect(table.occupancy == expectedOccupied)
     }
 
-    @Test("Hash collision handling")
-    func hashCollisionHandling() throws {
+    @Test
+    func `Hash collision handling`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert multiple elements with the same hash
@@ -173,8 +173,8 @@ struct HashTableInlineTests {
         #expect(table.position(forHash: 42, equals: { $0 == position2 }) == position2)
     }
 
-    @Test("Rehash removes tombstones")
-    func rehashRemovesTombstones() throws {
+    @Test
+    func `Rehash removes tombstones`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert 5 elements
@@ -205,8 +205,8 @@ struct HashTableInlineTests {
         #expect(table.position(forHash: hash4, equals: { $0 == position4 }) == position4)
     }
 
-    @Test("ForEach iteration")
-    func forEachIteration() throws {
+    @Test
+    func `ForEach iteration`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         // Insert 5 elements
@@ -228,8 +228,8 @@ struct HashTableInlineTests {
         }
     }
 
-    @Test("Update position")
-    func updatePosition() throws {
+    @Test
+    func `Update position`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position0: Index<InlineTestElement>.Bounded<16> = 0
@@ -246,8 +246,8 @@ struct HashTableInlineTests {
         #expect(table.position(forHash: 42, equals: { $0 == position0 }) == nil)
     }
 
-    @Test("Contains check")
-    func containsCheck() throws {
+    @Test
+    func `Contains check`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position: Index<InlineTestElement>.Bounded<16> = 0
@@ -257,8 +257,8 @@ struct HashTableInlineTests {
         #expect(table.contains(hashValue: 99, equals: { _ in true }) == false)
     }
 
-    @Test("Unchecked insert")
-    func uncheckedInsert() throws {
+    @Test
+    func `Unchecked insert`() throws {
         var table = Hash.Table<InlineTestElement>.Static<16>()
 
         let position0: Index<InlineTestElement>.Bounded<16> = 0
@@ -274,8 +274,8 @@ struct HashTableInlineTests {
         #expect(table.count == expectedCount)
     }
 
-    @Test("Lookup terminates at full capacity")
-    func lookupTerminatesAtFullCapacity() {
+    @Test
+    func `Lookup terminates at full capacity`() {
         var table = Hash.Table<InlineTestElement>.Static<2>()
 
         let position0: Index<InlineTestElement>.Bounded<2> = 0
@@ -298,8 +298,8 @@ struct HashTableInlineTests {
         #expect(table.contains(hashValue: 99, equals: { _ in false }) == false)
     }
 
-    @Test("Lookup terminates with hash collision at full capacity")
-    func lookupTerminatesWithCollisionAtFullCapacity() {
+    @Test
+    func `Lookup terminates with hash collision at full capacity`() {
         var table = Hash.Table<InlineTestElement>.Static<2>()
 
         let position0: Index<InlineTestElement>.Bounded<2> = 0
@@ -316,8 +316,8 @@ struct HashTableInlineTests {
         #expect(notFound == nil)
     }
 
-    @Test("Insert returns false at full capacity")
-    func insertReturnsFalseAtFullCapacity() {
+    @Test
+    func `Insert returns false at full capacity`() {
         var table = Hash.Table<InlineTestElement>.Static<2>()
 
         let position0: Index<InlineTestElement>.Bounded<2> = 0
@@ -337,8 +337,8 @@ struct HashTableInlineTests {
         #expect(uncheckedResult == false)
     }
 
-    @Test("Copyable when Element is Copyable")
-    func copyableWhenElementCopyable() throws {
+    @Test
+    func `Copyable when Element is Copyable`() throws {
         var table = Hash.Table<Int>.Static<16>()
         let pos0: Index<Int>.Bounded<16> = 0
         let pos1: Index<Int>.Bounded<16> = 1
