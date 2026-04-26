@@ -163,10 +163,10 @@ where Tag == Hash.Table<Element>.Remove, Base == Hash.Table<Element>, Element: ~
     @inlinable
     public mutating func all(keepingCapacity: Bool = false) {
         if keepingCapacity {
-            unsafe base.pointee._buffer.fill(metadata: Hash.Table<Element>.empty)
-            unsafe base.pointee._buffer.fill(payload: 0)
-            unsafe base.pointee._count = .zero
-            unsafe base.pointee._occupied = .zero
+            unsafe base.value._buffer.fill(metadata: Hash.Table<Element>.empty)
+            unsafe base.value._buffer.fill(payload: 0)
+            unsafe base.value._count = .zero
+            unsafe base.value._occupied = .zero
         } else {
             let hashCapacity = Hash.Table<Element>.bucketCapacity(for: .zero)
             let buffer = Buffer<Int>.Slots<Int>(
@@ -174,9 +174,9 @@ where Tag == Hash.Table<Element>.Remove, Base == Hash.Table<Element>, Element: ~
                 metadataInitial: Hash.Table<Element>.empty
             )
             buffer.fill(payload: 0)
-            unsafe base.pointee._buffer = buffer
-            unsafe base.pointee._count = .zero
-            unsafe base.pointee._occupied = .zero
+            unsafe base.value._buffer = buffer
+            unsafe base.value._count = .zero
+            unsafe base.value._occupied = .zero
         }
     }
 }

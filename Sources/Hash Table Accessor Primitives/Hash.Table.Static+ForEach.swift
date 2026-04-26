@@ -42,7 +42,7 @@ where Tag == Hash.Table<Element>.ForEach,
     public func occupied(
         _ body: (Hash.Table<Element>.Bucket.Index, Index<Element>.Bounded<n>) -> Void
     ) {
-        unsafe base.pointee.eachOccupied(body)
+        unsafe base.value.eachOccupied(body)
     }
 
     /// Iterates over all bounded element positions in the hash table.
@@ -50,6 +50,6 @@ where Tag == Hash.Table<Element>.ForEach,
     /// - Parameter body: A closure called with each bounded element position.
     @inlinable
     public func position(_ body: (Index<Element>.Bounded<n>) -> Void) {
-        unsafe base.pointee.eachPosition(body)
+        unsafe base.value.eachPosition(body)
     }
 }

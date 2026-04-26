@@ -49,7 +49,7 @@ where Tag == Hash.Table<Element>.Bucket.Ops, Base == Hash.Table<Element>, Elemen
     /// - Parameter hash: A normalized hash value (output of `normalize()`).
     @inlinable
     public func `for`(hash: Int) -> Hash.Table<Element>.Bucket.Index {
-        let capacity = unsafe base.pointee.bucketCapacity
+        let capacity = unsafe base.value.bucketCapacity
         return Hash.Table<Element>.bucket(for: hash, capacity: capacity)
     }
 
@@ -60,7 +60,7 @@ where Tag == Hash.Table<Element>.Bucket.Ops, Base == Hash.Table<Element>, Elemen
     /// Usage: `table.bucket.next(currentBucket)`
     @inlinable
     public func next(_ bucket: Hash.Table<Element>.Bucket.Index) -> Hash.Table<Element>.Bucket.Index {
-        let capacity = unsafe base.pointee.bucketCapacity
+        let capacity = unsafe base.value.bucketCapacity
         return Hash.Table<Element>.Bucket.Index.Modular.successor(of: bucket, capacity: capacity)
     }
 }

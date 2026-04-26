@@ -38,11 +38,11 @@ where Tag == Hash.Table<Element>.ForEach, Base == Hash.Table<Element>, Element: 
     @inlinable
     public func occupied(_ body: (Hash.Table<Element>.Bucket.Index, Index<Element>) -> Void) {
         var bucket: Hash.Table<Element>.Bucket.Index = .zero
-        let cap = unsafe base.pointee.bucketCapacity
+        let cap = unsafe base.value.bucketCapacity
         while bucket < cap {
-            let hash = unsafe base.pointee[hash: bucket]
+            let hash = unsafe base.value[hash: bucket]
             if hash != Hash.Table<Element>.empty && hash != Hash.Table<Element>.deleted {
-                let position = unsafe base.pointee[position: bucket]
+                let position = unsafe base.value[position: bucket]
                 body(bucket, position)
             }
             bucket += .one

@@ -40,7 +40,7 @@ where Tag == Hash.Table<Element>.Positions,
     /// - Parameter removedPosition: The bounded position that was removed.
     @inlinable
     public mutating func decrement(after removedPosition: Index<Element>.Bounded<n>) {
-        unsafe base.pointee.decrementAllPositions(after: removedPosition)
+        unsafe base.value.decrementAllPositions(after: removedPosition)
     }
 
     /// Updates the position for an element with the given hash value.
@@ -57,7 +57,7 @@ where Tag == Hash.Table<Element>.Positions,
         equals: (Index<Element>.Bounded<n>) -> Bool,
         newPosition: Index<Element>.Bounded<n>
     ) -> Bool {
-        unsafe base.pointee.updatePositionInternal(
+        unsafe base.value.updatePositionInternal(
             forHash: hashValue, equals: equals, newPosition: newPosition
         )
     }
@@ -79,7 +79,7 @@ where Tag == Hash.Table<Element>.Positions,
         equals: (Index<Element>.Bounded<n>, borrowing Context) -> Bool,
         newPosition: Index<Element>.Bounded<n>
     ) -> Bool {
-        unsafe base.pointee.updatePositionInternal(
+        unsafe base.value.updatePositionInternal(
             forHash: hashValue, context: context, equals: equals, newPosition: newPosition
         )
     }
@@ -93,6 +93,6 @@ where Tag == Hash.Table<Element>.Positions,
     /// - Precondition: The bucket must contain a valid element.
     @inlinable
     public mutating func update(atBucket bucket: Hash.Table<Element>.Bucket.Index, newPosition: Index<Element>.Bounded<n>) {
-        unsafe base.pointee.updatePositionInternal(atBucket: bucket, newPosition: newPosition)
+        unsafe base.value.updatePositionInternal(atBucket: bucket, newPosition: newPosition)
     }
 }
