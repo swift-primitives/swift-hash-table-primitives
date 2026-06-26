@@ -12,16 +12,13 @@
 public import Hash_Primitives
 public import Index_Primitives
 
-// MARK: - Index: Hash.Protocol
+extension Hash.Table where Element: ~Copyable {
+    /// Marker type for bucket indices in hash table storage.
+    public struct Bucket: ~Copyable {
+        /// Typed index into the bucket array.
+        public typealias Index = Index_Primitives.Index<Self>
 
-// Note: The `==` requirement is satisfied by Index+Comparison.Protocol.swift
-// which provides `Comparison.Protocol` conformance with identical signature.
-// This avoids ambiguous `==` operators.
-
-extension Tagged: @retroactive Hash.`Protocol`
-where RawValue == Affine.Discrete.Position, Tag: ~Copyable {
-    @inlinable
-    public borrowing func hash(into hasher: inout Hasher) {
-        hasher.combine(rawValue)
+        /// Tag type for bucket operations.
+        public enum Ops {}
     }
 }

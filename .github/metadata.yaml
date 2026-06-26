@@ -1,0 +1,9 @@
+# .github/metadata.yaml
+# Triaged by AI-assisted bulk pass (2026-04-29).
+description: "Hash.Table — an open-addressed hash table mapping elements to typed Index<Element> positions in external storage (O(1) average lookup); the index layer for hashed collections."
+topics:
+  - primitives
+  - hash
+homepage: "https://swift-institute.org"
+readme:
+  family: E
